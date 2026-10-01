@@ -18,6 +18,7 @@ import { readHelpCenter } from "@/lib/help-center/articles";
 import { LOCALES } from "@/lib/i18n/locale";
 import { messages } from "@/lib/i18n/messages";
 import { storeData } from "@/lib/store/customers";
+import { parseStoreDate } from "@/lib/store/dates";
 
 // The frozen tickets of spec §5 (P-04): their mix, and gold that exists in the help center and
 // in data/customers.json. Written before any run; the hash below makes every edit visible.
@@ -87,6 +88,23 @@ describe(TICKETS_PATH, () => {
     }
   });
 
+  it("says how long ago an order was delivered only as the data has it (D6)", () => {
+    const WORDS = ["zero", "one", "two", "three", "four", "five", "six", "seven"];
+    const asOf = parseStoreDate(storeData.asOf).getTime();
+    const claims = tickets.flatMap((ticket) => {
+      const ago = /delivered (\w+) days? ago/i.exec(ticket.message)?.[1];
+      const orderId = /AO-\d+/.exec(ticket.message)?.[0];
+      return ago && orderId ? [{ ticket, ago, orderId }] : [];
+    });
+    expect(claims.map(({ ticket }) => ticket.id)).toEqual(["t17"]);
+    for (const { ticket, ago, orderId } of claims) {
+      const deliveredOn = persona(ticket).orders.find(({ id }) => id === orderId)?.deliveredOn;
+      expect(deliveredOn, `${ticket.id}: ${orderId}`).toBeDefined();
+      const days = Math.round((asOf - parseStoreDate(deliveredOn!).getTime()) / 86_400_000);
+      expect(WORDS.indexOf(ago.toLowerCase()), ticket.id).toBe(days);
+    }
+  });
+
   it("repeats no suggested prompt, so the demo never shows a ticket's answer in advance", () => {
     const prompts = new Set(LOCALES.flatMap((locale) => messages[locale].prompts).map(folded));
     for (const { id, message } of tickets) expect(prompts.has(folded(message)), id).toBe(false);
@@ -121,9 +139,10 @@ describe("the order tickets' gold", () => {
     },
   );
 
-  it("asks for statuses and dates, the values spec §5 names", () => {
+  it("asks for statuses, dates and a tracking number, the values spec §5 names (D5)", () => {
     const fields = new Set(ofKind("order").map(({ gold }) => gold.field));
     expect(fields.has("status")).toBe(true);
+    expect(fields.has("trackingNumber")).toBe(true);
     expect([...fields].some((field) => field.endsWith("On") || field === "estimatedDelivery")).toBe(
       true,
     );

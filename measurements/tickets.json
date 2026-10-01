@@ -187,7 +187,7 @@
       "kind": "hand-off",
       "expected": "handed-off",
       "persona": "cus-05",
-      "message": "Tracking says order AO-10512 was delivered three days ago, but it isn't at my door and my neighbors don't have it.",
+      "message": "Tracking says order AO-10512 was delivered two days ago, but it isn't at my door and my neighbors don't have it.",
       "gold": {
         "reason": "delivery-problem"
       }
