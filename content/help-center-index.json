@@ -1,0 +1,472 @@
+{
+  "model": "mock",
+  "dimensions": null,
+  "corpusHash": "7f3986370b2459409498534065de25d055c6768114c737f3a982ee9655748533",
+  "builtAt": "2026-10-01T14:26:37.813Z",
+  "chunks": [
+    {
+      "id": "caring-for-your-gear",
+      "file": "caring-for-your-gear.md",
+      "heading": "Caring for your gear",
+      "startLine": 5,
+      "endLine": 7,
+      "text": "\nA little care keeps your gear working for many seasons. Always check the care label first.\n"
+    },
+    {
+      "id": "caring-for-your-gear#tents",
+      "file": "caring-for-your-gear.md",
+      "heading": "Caring for your gear › Tents",
+      "startLine": 8,
+      "endLine": 11,
+      "text": "## Tents\n\nLet your tent dry completely before you pack it away, even after a dry night, to prevent mildew. Store it loosely in a cool, dry place.\n"
+    },
+    {
+      "id": "caring-for-your-gear#rain-jackets",
+      "file": "caring-for-your-gear.md",
+      "heading": "Caring for your gear › Rain jackets",
+      "startLine": 12,
+      "endLine": 15,
+      "text": "## Rain jackets\n\nWash your rain jacket with a cleaner made for technical fabrics, and never use fabric softener, which clogs the fabric. Tumble dry it on low heat to restore its water repellency.\n"
+    },
+    {
+      "id": "caring-for-your-gear#hiking-boots",
+      "file": "caring-for-your-gear.md",
+      "heading": "Caring for your gear › Hiking boots",
+      "startLine": 16,
+      "endLine": 19,
+      "text": "## Hiking boots\n\nBrush off the mud after each hike and let your boots air dry at room temperature, away from heaters and campfires, which can crack the leather and weaken the glue.\n"
+    },
+    {
+      "id": "caring-for-your-gear#sleeping-bags",
+      "file": "caring-for-your-gear.md",
+      "heading": "Caring for your gear › Sleeping bags",
+      "startLine": 20,
+      "endLine": 22,
+      "text": "## Sleeping bags\n\nStore your sleeping bag loose in a large storage sack, not compressed in its stuff sack, so the insulation keeps its loft."
+    },
+    {
+      "id": "changing-or-canceling-an-order",
+      "file": "changing-or-canceling-an-order.md",
+      "heading": "Changing or canceling an order",
+      "startLine": 5,
+      "endLine": 7,
+      "text": "\nPlans change. What we can do depends on whether your order has shipped.\n"
+    },
+    {
+      "id": "changing-or-canceling-an-order#before-your-order-ships",
+      "file": "changing-or-canceling-an-order.md",
+      "heading": "Changing or canceling an order › Before your order ships",
+      "startLine": 8,
+      "endLine": 11,
+      "text": "## Before your order ships\n\nYou can change the shipping address or the items in an order until your order ships. Ask our support team: the assistant passes your request to a member of the team, who makes the change and confirms it by email.\n"
+    },
+    {
+      "id": "changing-or-canceling-an-order#after-your-order-ships",
+      "file": "changing-or-canceling-an-order.md",
+      "heading": "Changing or canceling an order › After your order ships",
+      "startLine": 12,
+      "endLine": 15,
+      "text": "## After your order ships\n\nOnce an order has shipped, we can no longer change it. You can send the items back under our return policy, explained in the article \"Returns\".\n"
+    },
+    {
+      "id": "changing-or-canceling-an-order#canceling-an-order",
+      "file": "changing-or-canceling-an-order.md",
+      "heading": "Changing or canceling an order › Canceling an order",
+      "startLine": 16,
+      "endLine": 18,
+      "text": "## Canceling an order\n\nCanceling follows the same rule: an order can be canceled until it ships. Ask our support team, and a member of the team will cancel it and confirm by email."
+    },
+    {
+      "id": "contacting-support",
+      "file": "contacting-support.md",
+      "heading": "Contacting support",
+      "startLine": 5,
+      "endLine": 7,
+      "text": "\nOur support assistant and our support team work together.\n"
+    },
+    {
+      "id": "contacting-support#what-the-assistant-can-do",
+      "file": "contacting-support.md",
+      "heading": "Contacting support › What the assistant can do",
+      "startLine": 8,
+      "endLine": 11,
+      "text": "## What the assistant can do\n\nThe assistant answers questions from these help articles, quoting the article it used, and looks up the orders on your own account. It hands everything else to a member of our team: refunds, order changes, delivery problems, warranty claims and anything these articles don't cover. It only helps with Acme Outfitters orders and questions.\n"
+    },
+    {
+      "id": "contacting-support#reaching-our-team",
+      "file": "contacting-support.md",
+      "heading": "Contacting support › Reaching our team",
+      "startLine": 12,
+      "endLine": 15,
+      "text": "## Reaching our team\n\nWhen the assistant hands your conversation over, a member of our team replies by email within 1 business day. You can also email us at support@acmeoutfitters.example.\n"
+    },
+    {
+      "id": "contacting-support#your-privacy",
+      "file": "contacting-support.md",
+      "heading": "Contacting support › Your privacy",
+      "startLine": 16,
+      "endLine": 18,
+      "text": "## Your privacy\n\nWe discuss an order only with the customer who placed it. Neither the assistant nor our team shares anyone else's orders or account details."
+    },
+    {
+      "id": "damaged-or-defective-items",
+      "file": "damaged-or-defective-items.md",
+      "heading": "Damaged or defective items",
+      "startLine": 5,
+      "endLine": 7,
+      "text": "\nWe check every order before it ships, but things can still go wrong in transit or in use.\n"
+    },
+    {
+      "id": "damaged-or-defective-items#damaged-on-arrival",
+      "file": "damaged-or-defective-items.md",
+      "heading": "Damaged or defective items › Damaged on arrival",
+      "startLine": 8,
+      "endLine": 11,
+      "text": "## Damaged on arrival\n\nIf an item arrives damaged, keep the packaging and contact our support team with your order number and a photo of the damage. A member of the team will arrange a replacement or a refund.\n"
+    },
+    {
+      "id": "damaged-or-defective-items#defective-items",
+      "file": "damaged-or-defective-items.md",
+      "heading": "Damaged or defective items › Defective items",
+      "startLine": 12,
+      "endLine": 14,
+      "text": "## Defective items\n\nInside the return window, you can send a defective item back at our cost, as the article \"Returns\" explains. After that, our warranty covers manufacturing defects; see the article \"Warranty\"."
+    },
+    {
+      "id": "exchanges",
+      "file": "exchanges.md",
+      "heading": "Exchanges",
+      "startLine": 5,
+      "endLine": 7,
+      "text": "\nNeed a different size or color?\n"
+    },
+    {
+      "id": "exchanges#how-exchanges-work",
+      "file": "exchanges.md",
+      "heading": "Exchanges › How exchanges work",
+      "startLine": 8,
+      "endLine": 10,
+      "text": "## How exchanges work\n\nWe don't swap items directly. Send the item back under our return policy, explained in the article \"Returns\", and place a new order for the size or color you want. If you place the new order first, you don't have to wait for the return to arrive."
+    },
+    {
+      "id": "late-or-missing-packages",
+      "file": "late-or-missing-packages.md",
+      "heading": "Late or missing packages",
+      "startLine": 5,
+      "endLine": 7,
+      "text": "\nMost orders arrive by their estimated delivery date. Here is what to do when one does not.\n"
+    },
+    {
+      "id": "late-or-missing-packages#my-package-is-late",
+      "file": "late-or-missing-packages.md",
+      "heading": "Late or missing packages › My package is late",
+      "startLine": 8,
+      "endLine": 11,
+      "text": "## My package is late\n\nCheck the tracking link first: carriers sometimes update it a day late. If your order is more than 2 business days past its estimated delivery date, contact our support team, and a member of the team will look into it with the carrier.\n"
+    },
+    {
+      "id": "late-or-missing-packages#tracking-says-delivered-but-i-cant-find-it",
+      "file": "late-or-missing-packages.md",
+      "heading": "Late or missing packages › Tracking says delivered, but I can't find it",
+      "startLine": 12,
+      "endLine": 14,
+      "text": "## Tracking says delivered, but I can't find it\n\nLook around your door, your mailbox and your building's mail room, and ask your neighbors. Carriers sometimes mark a package as delivered shortly before it arrives, so wait until the end of the next business day. If it still has not turned up, contact our support team: a member of the team will open an investigation with the carrier."
+    },
+    {
+      "id": "managing-your-account",
+      "file": "managing-your-account.md",
+      "heading": "Managing your account",
+      "startLine": 5,
+      "endLine": 7,
+      "text": "\nYour account keeps your orders, addresses and preferences in one place.\n"
+    },
+    {
+      "id": "managing-your-account#updating-your-details",
+      "file": "managing-your-account.md",
+      "heading": "Managing your account › Updating your details",
+      "startLine": 8,
+      "endLine": 11,
+      "text": "## Updating your details\n\nSign in and open Account settings to change your name, email address, saved addresses or email preferences. Changes take effect right away.\n"
+    },
+    {
+      "id": "managing-your-account#what-support-cant-change",
+      "file": "managing-your-account.md",
+      "heading": "Managing your account › What support can't change",
+      "startLine": 12,
+      "endLine": 15,
+      "text": "## What support can't change\n\nOur support assistant never changes account details. Use Account settings, or the self-service link for a password, which the article \"Resetting your password\" explains.\n"
+    },
+    {
+      "id": "managing-your-account#your-order-history",
+      "file": "managing-your-account.md",
+      "heading": "Managing your account › Your order history",
+      "startLine": 16,
+      "endLine": 18,
+      "text": "## Your order history\n\nYour account lists every order you have placed, with its status and tracking details."
+    },
+    {
+      "id": "payment-methods",
+      "file": "payment-methods.md",
+      "heading": "Payment methods",
+      "startLine": 5,
+      "endLine": 7,
+      "text": "\nAll our prices are in US dollars.\n"
+    },
+    {
+      "id": "payment-methods#ways-to-pay",
+      "file": "payment-methods.md",
+      "heading": "Payment methods › Ways to pay",
+      "startLine": 8,
+      "endLine": 11,
+      "text": "## Ways to pay\n\nWe accept major credit and debit cards and Acme Outfitters gift cards.\n"
+    },
+    {
+      "id": "payment-methods#gift-cards",
+      "file": "payment-methods.md",
+      "heading": "Payment methods › Gift cards",
+      "startLine": 12,
+      "endLine": 15,
+      "text": "## Gift cards\n\nAcme Outfitters gift cards are digital. They never expire, and they can't be exchanged for cash.\n"
+    },
+    {
+      "id": "payment-methods#keeping-your-card-details-safe",
+      "file": "payment-methods.md",
+      "heading": "Payment methods › Keeping your card details safe",
+      "startLine": 16,
+      "endLine": 18,
+      "text": "## Keeping your card details safe\n\nOur support team and our assistant never ask for your full card number. Never share it in a chat or an email."
+    },
+    {
+      "id": "refunds",
+      "file": "refunds.md",
+      "heading": "Refunds",
+      "startLine": 5,
+      "endLine": 7,
+      "text": "\nHere is how and when you get your money back.\n"
+    },
+    {
+      "id": "refunds#when-you-get-your-money-back",
+      "file": "refunds.md",
+      "heading": "Refunds › When you get your money back",
+      "startLine": 8,
+      "endLine": 11,
+      "text": "## When you get your money back\n\nWe refund your original payment method within 5 business days of your return arriving at our warehouse. Your bank may take a few more days to show the refund.\n"
+    },
+    {
+      "id": "refunds#who-approves-refunds",
+      "file": "refunds.md",
+      "heading": "Refunds › Who approves refunds",
+      "startLine": 12,
+      "endLine": 14,
+      "text": "## Who approves refunds\n\nA member of our support team reviews and issues every refund. Our support assistant can't grant refunds: it passes your request to the team."
+    },
+    {
+      "id": "resetting-your-password",
+      "file": "resetting-your-password.md",
+      "heading": "Resetting your password",
+      "startLine": 5,
+      "endLine": 7,
+      "text": "\nYou can reset your password yourself at any time.\n"
+    },
+    {
+      "id": "resetting-your-password#send-yourself-a-reset-link",
+      "file": "resetting-your-password.md",
+      "heading": "Resetting your password › Send yourself a reset link",
+      "startLine": 8,
+      "endLine": 11,
+      "text": "## Send yourself a reset link\n\nOn the sign-in page, choose \"Forgot password?\" and enter the email address on your account. We email you a self-service link to choose a new password.\n"
+    },
+    {
+      "id": "resetting-your-password#if-the-email-doesnt-arrive",
+      "file": "resetting-your-password.md",
+      "heading": "Resetting your password › If the email doesn't arrive",
+      "startLine": 12,
+      "endLine": 15,
+      "text": "## If the email doesn't arrive\n\nCheck your spam or junk folder, and make sure you entered the email address you signed up with. You can ask for a new link at any time; only the newest link works.\n"
+    },
+    {
+      "id": "resetting-your-password#why-we-cant-reset-it-for-you",
+      "file": "resetting-your-password.md",
+      "heading": "Resetting your password › Why we can't reset it for you",
+      "startLine": 16,
+      "endLine": 18,
+      "text": "## Why we can't reset it for you\n\nFor your security, the self-service link is the only way to reset a password. Our support assistant can't reset it for you."
+    },
+    {
+      "id": "returns",
+      "file": "returns.md",
+      "heading": "Returns",
+      "startLine": 5,
+      "endLine": 7,
+      "text": "\nIf something isn't right, you can send it back.\n"
+    },
+    {
+      "id": "returns#return-window",
+      "file": "returns.md",
+      "heading": "Returns › Return window",
+      "startLine": 8,
+      "endLine": 11,
+      "text": "## Return window\n\nYou can return an item within 30 days of its delivery.\n"
+    },
+    {
+      "id": "returns#condition-of-returned-items",
+      "file": "returns.md",
+      "heading": "Returns › Condition of returned items",
+      "startLine": 12,
+      "endLine": 15,
+      "text": "## Condition of returned items\n\nItems must be unused and with the tags still attached. We can't accept items that have been worn outdoors, washed or altered.\n"
+    },
+    {
+      "id": "returns#return-shipping",
+      "file": "returns.md",
+      "heading": "Returns › Return shipping",
+      "startLine": 16,
+      "endLine": 19,
+      "text": "## Return shipping\n\nYou pay for return shipping, unless the item is defective. For a defective item, we cover the return shipping.\n"
+    },
+    {
+      "id": "returns#how-to-start-a-return",
+      "file": "returns.md",
+      "heading": "Returns › How to start a return",
+      "startLine": 20,
+      "endLine": 22,
+      "text": "## How to start a return\n\nContact our support team with your order number. A member of the team emails you the return instructions."
+    },
+    {
+      "id": "shipping-options",
+      "file": "shipping-options.md",
+      "heading": "Shipping options and costs",
+      "startLine": 5,
+      "endLine": 7,
+      "text": "\nAcme Outfitters ships every order from our own warehouse, with the shipping option you choose at checkout.\n"
+    },
+    {
+      "id": "shipping-options#standard-shipping",
+      "file": "shipping-options.md",
+      "heading": "Shipping options and costs › Standard shipping",
+      "startLine": 8,
+      "endLine": 11,
+      "text": "## Standard shipping\n\nStandard shipping takes 5–7 business days. It is free on orders over $75. On smaller orders, the shipping cost is shown at checkout before you pay.\n"
+    },
+    {
+      "id": "shipping-options#express-shipping",
+      "file": "shipping-options.md",
+      "heading": "Shipping options and costs › Express shipping",
+      "startLine": 12,
+      "endLine": 15,
+      "text": "## Express shipping\n\nExpress shipping takes 2 business days and costs $15, whatever the order total.\n"
+    },
+    {
+      "id": "shipping-options#how-delivery-times-are-counted",
+      "file": "shipping-options.md",
+      "heading": "Shipping options and costs › How delivery times are counted",
+      "startLine": 16,
+      "endLine": 19,
+      "text": "## How delivery times are counted\n\nDelivery times count business days, Monday to Friday except US federal holidays, starting the day after your order ships.\n"
+    },
+    {
+      "id": "shipping-options#where-we-ship",
+      "file": "shipping-options.md",
+      "heading": "Shipping options and costs › Where we ship",
+      "startLine": 20,
+      "endLine": 22,
+      "text": "## Where we ship\n\nWe ship to addresses in the United States only."
+    },
+    {
+      "id": "size-guide",
+      "file": "size-guide.md",
+      "heading": "Finding your size",
+      "startLine": 5,
+      "endLine": 7,
+      "text": "\nOur clothing and footwear use standard US sizes, and each product page has its own size chart.\n"
+    },
+    {
+      "id": "size-guide#jackets",
+      "file": "size-guide.md",
+      "heading": "Finding your size › Jackets",
+      "startLine": 8,
+      "endLine": 11,
+      "text": "## Jackets\n\nOur jackets fit true to size, with room for a light layer underneath. If you plan to wear a thick fleece under a rain jacket, choose one size up.\n"
+    },
+    {
+      "id": "size-guide#hiking-boots",
+      "file": "size-guide.md",
+      "heading": "Finding your size › Hiking boots",
+      "startLine": 12,
+      "endLine": 15,
+      "text": "## Hiking boots\n\nOur boots fit true to size with a regular hiking sock. If you wear thick socks or are between sizes, choose the larger size. Feet swell during the day, so measure yours in the evening.\n"
+    },
+    {
+      "id": "size-guide#still-not-sure",
+      "file": "size-guide.md",
+      "heading": "Finding your size › Still not sure?",
+      "startLine": 16,
+      "endLine": 18,
+      "text": "## Still not sure?\n\nThe articles \"Returns\" and \"Exchanges\" explain what to do when a size doesn't work out."
+    },
+    {
+      "id": "tracking-your-order",
+      "file": "tracking-your-order.md",
+      "heading": "Tracking your order",
+      "startLine": 5,
+      "endLine": 7,
+      "text": "\nYou can follow every order from your account, and our support assistant can look up your orders for you.\n"
+    },
+    {
+      "id": "tracking-your-order#order-statuses",
+      "file": "tracking-your-order.md",
+      "heading": "Tracking your order › Order statuses",
+      "startLine": 8,
+      "endLine": 16,
+      "text": "## Order statuses\n\nEach order shows one of these statuses:\n\n- Processing: we have your order and are preparing it. It has not shipped yet.\n- Shipped: your order is on its way. It has a tracking number and an estimated delivery date.\n- Delivered: the carrier has marked your order as delivered.\n- Returned: your return has arrived at our warehouse.\n"
+    },
+    {
+      "id": "tracking-your-order#tracking-number",
+      "file": "tracking-your-order.md",
+      "heading": "Tracking your order › Tracking number",
+      "startLine": 17,
+      "endLine": 20,
+      "text": "## Tracking number\n\nWhen your order ships, we email you its tracking number and a link to follow the package. The same number and link appear in the order's details in your account.\n"
+    },
+    {
+      "id": "tracking-your-order#estimated-delivery-date",
+      "file": "tracking-your-order.md",
+      "heading": "Tracking your order › Estimated delivery date",
+      "startLine": 21,
+      "endLine": 23,
+      "text": "## Estimated delivery date\n\nOnce your order ships, its details show an estimated delivery date, counted as the article \"Shipping options and costs\" explains."
+    },
+    {
+      "id": "warranty",
+      "file": "warranty.md",
+      "heading": "Warranty",
+      "startLine": 5,
+      "endLine": 7,
+      "text": "\nWe stand behind the gear we sell.\n"
+    },
+    {
+      "id": "warranty#what-the-warranty-covers",
+      "file": "warranty.md",
+      "heading": "Warranty › What the warranty covers",
+      "startLine": 8,
+      "endLine": 11,
+      "text": "## What the warranty covers\n\nEvery item we sell is covered for 1 year against manufacturing defects, starting on its delivery date.\n"
+    },
+    {
+      "id": "warranty#what-it-doesnt-cover",
+      "file": "warranty.md",
+      "heading": "Warranty › What it doesn't cover",
+      "startLine": 12,
+      "endLine": 15,
+      "text": "## What it doesn't cover\n\nThe warranty doesn't cover normal wear and tear, damage from accidents or misuse, or items that have been altered.\n"
+    },
+    {
+      "id": "warranty#making-a-warranty-claim",
+      "file": "warranty.md",
+      "heading": "Warranty › Making a warranty claim",
+      "startLine": 16,
+      "endLine": 18,
+      "text": "## Making a warranty claim\n\nContact our support team with your order number, a short description of the problem and a photo. A member of the team reviews the claim and, if it is covered, repairs or replaces the item."
+    }
+  ]
+}
