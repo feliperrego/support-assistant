@@ -3,9 +3,13 @@
  * pipeline on the server, scores them by script, writes every transcript and score, and prints
  * README line 1 and the first line of "How it's measured" (template spec §7.5).
  *
- * Mock mode, zero cost, what CI runs: AI_MOCK=1 pnpm eval
+ * Mock mode, zero cost: AI_MOCK=1 pnpm eval
  *   It rewrites measurements/eval-mock.json, the inbox's stand-in until the real run exists.
  *   Its README lines only show the format: never paste them into the README.
+ * Mock check, zero cost, what CI runs: AI_MOCK=1 pnpm eval --check
+ *   It writes nothing, and fails unless every ticket's transcript and verdict equal the committed
+ *   mock run's (lib/eval/check.ts): the mock's answers are known, so it proves the grader and the
+ *   pipeline, not the model.
  * Real mode, by hand at rollout step 3 with Felipe's OK (spec §7), after the real index (step 2)
  * and `vercel env pull`: AI_MODEL=<provider/model> pnpm eval
  *   It writes measurements/eval-YYYY-MM-DD.json and never overwrites a good run of the same day;
@@ -15,6 +19,7 @@ import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import type { LanguageModel } from "ai";
+import { mockRunChanges } from "@/lib/eval/check";
 import { EVAL_METRIC, type EvalRun, MOCK_RUN_PATH } from "@/lib/eval/record";
 import { runEval } from "@/lib/eval/run";
 import { readmeLines, summarizeResults } from "@/lib/eval/summary";
@@ -26,6 +31,17 @@ import { createRetriever } from "@/lib/rag/retrieve";
 
 // Loaded the way Next.js loads it: variables already set in the shell win.
 const ENV_FILE = ".env.local";
+
+const CHECK_FLAG = "--check";
+
+/** True for `pnpm eval --check`; any other argument is refused, so a typo never re-records. */
+function checkRequested(args: readonly string[]): boolean {
+  const unknown = args.filter((arg) => arg !== CHECK_FLAG && arg !== "--");
+  if (unknown.length > 0) {
+    throw new Error(`Unknown argument: ${unknown.join(" ")}. The only one is ${CHECK_FLAG}.`);
+  }
+  return args.includes(CHECK_FLAG);
+}
 
 function git(...args: string[]): string {
   return execFileSync("git", args, { encoding: "utf8" }).trim();
@@ -48,10 +64,16 @@ function writeRun(file: string, run: EvalRun): void {
 }
 
 async function main(): Promise<void> {
+  const check = checkRequested(process.argv.slice(2));
   if (existsSync(ENV_FILE)) process.loadEnvFile(ENV_FILE);
   // Imported after the env file: lib/ai/model.ts reads AI_MOCK and AI_MODEL when it loads.
   const { getModel, IS_MOCK, MODEL_LABEL } = await import("@/lib/ai/model");
   const { createScenarioMockModel } = await import("@/lib/ai/mock");
+  if (check && !IS_MOCK) {
+    throw new Error(`${CHECK_FLAG} compares a mock run with ${MOCK_RUN_PATH}: set AI_MOCK=1.`);
+  }
+  // The committed mock run, read before the run, so a missing file fails at no cost.
+  const committedRun = check ? (JSON.parse(readFileSync(MOCK_RUN_PATH, "utf8")) as EvalRun) : null;
 
   const sha256 = frozenTicketsHash();
   const set = readTickets();
@@ -68,7 +90,8 @@ async function main(): Promise<void> {
   // Checked before any request is spent (template spec §7.5).
   if (!IS_MOCK) assertSafeToWrite(file, false, existsSync(file));
 
-  console.log(`Mode:    ${IS_MOCK ? "mock: no model call, no cost" : `real: ${MODEL_LABEL}`}`);
+  const mode = check ? "mock check" : "mock";
+  console.log(`Mode:    ${IS_MOCK ? `${mode}: no model call, no cost` : `real: ${MODEL_LABEL}`}`);
   console.log(`Tickets: ${set.tickets.length} from ${TICKETS_PATH} (frozen ${set.frozenOn})`);
   const { results, abortReason } = await runEval({
     tickets: set.tickets,
@@ -109,8 +132,23 @@ async function main(): Promise<void> {
     throw new Error(`The run stopped: ${abortReason}.${IS_MOCK ? "" : ` Wrote ${abortedFile}.`}`);
   }
 
-  writeRun(file, run);
   const { summary } = run;
+  if (committedRun !== null) {
+    const changes = mockRunChanges(committedRun, run);
+    if (changes.length > 0) {
+      throw new Error(
+        `This mock run differs from ${MOCK_RUN_PATH}:\n` +
+          changes.map((change) => `  ${change}\n`).join("") +
+          `If the change is intended, rerun AI_MOCK=1 pnpm eval and commit ${MOCK_RUN_PATH}.`,
+      );
+    }
+    console.log(`
+Passed:  ${summary!.passed} of ${summary!.tickets}
+Checked: every ticket's transcript and verdict equal ${MOCK_RUN_PATH}'s. Nothing written.`);
+    return;
+  }
+
+  writeRun(file, run);
   const lines = readmeLines(run, file);
   console.log(`
 Passed:  ${summary!.passed} of ${summary!.tickets}

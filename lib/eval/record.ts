@@ -14,7 +14,10 @@ import type { CitationRecord, ToolCallRecord } from "./transcript";
 /** The metric name of measurements/<metric>-YYYY-MM-DD.json (lib/measure/record.ts). */
 export const EVAL_METRIC = "eval";
 
-/** The mock run, rewritten by every mock run (CI, `AI_MOCK=1 pnpm eval`); never a measurement. */
+/**
+ * The mock run: `AI_MOCK=1 pnpm eval` rewrites it and CI's `pnpm eval --check` checks it. Never a
+ * measurement.
+ */
 export const MOCK_RUN_PATH = "measurements/eval-mock.json";
 
 /** The tokens of every model call of one answer; null for a count the provider did not report. */

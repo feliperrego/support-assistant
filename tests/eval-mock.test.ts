@@ -9,7 +9,8 @@ import { readIndexFile } from "@/lib/rag/index-file";
 
 // The committed mock run (spec §5): the inbox shows it until the real run exists (P-09), so it
 // must match the frozen tickets, the help-center index, the scorer and the transcript reader of
-// this commit. A stale one fails here: rerun `AI_MOCK=1 pnpm eval` and commit the file.
+// this commit. A stale one fails here, or in CI's `pnpm eval --check` when the pipeline's answers
+// changed (lib/eval/check.ts): rerun `AI_MOCK=1 pnpm eval` and commit the file.
 describe(MOCK_RUN_PATH, () => {
   const run = JSON.parse(readFileSync(MOCK_RUN_PATH, "utf8")) as EvalRun;
   const { tickets } = readTickets();

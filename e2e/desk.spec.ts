@@ -8,8 +8,8 @@ import { expectNoEnglish, expectPortuguese, waitForHydration } from "./helpers/i
 // Smoke e2e of P1's support desk (spec §6; ROADMAP S8: one smoke e2e per main flow): the inbox
 // shows a recorded conversation; the drawer gets a mock cited answer with a verified badge; a
 // hand-off shows its card; the Evals page renders the headline. Plus the phone (S7) and the
-// pt-BR interface (P-11). The production build in mock mode: CI runs `pnpm eval` before the
-// build, so the inbox shows that mock run, whose transcripts do not change between runs.
+// pt-BR interface (P-11). The production build in mock mode shows the committed mock run, whose
+// transcripts CI's `pnpm eval --check` has just checked against the pipeline (lib/eval/check.ts).
 
 const { run } = readShownRun();
 
