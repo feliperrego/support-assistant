@@ -1,13 +1,25 @@
 import { APICallError, simulateReadableStream } from "ai";
 import { MockLanguageModelV4 } from "ai/test";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { POST } from "@/app/api/chat/route";
-import { buildStreamParts, createMockModel, type MockStreamPart } from "@/lib/ai/mock";
+import {
+  buildStreamParts,
+  buildToolCallParts,
+  createMockModel,
+  type MockStreamPart,
+} from "@/lib/ai/mock";
 import { ERROR_CHUNKS, MOCK_ERROR_MESSAGE, resetMockScenarios } from "@/lib/ai/mock-scenarios";
 import { MAX_USER_CHARS } from "@/lib/chat/config";
 import { SAFE_ERROR_MESSAGE } from "@/lib/chat/errors";
 import { buildInstructions } from "@/lib/chat/instructions";
-import { MAX_ASSISTANT_CHARS, MAX_MESSAGES, MAX_OUTPUT_TOKENS } from "@/lib/chat/limits";
+import { MAX_ASSISTANT_CHARS, MAX_MESSAGES, MAX_OUTPUT_TOKENS, MAX_STEPS } from "@/lib/chat/limits";
+import type { Locale } from "@/lib/i18n/locale";
+import { loadIndex, readIndexFile } from "@/lib/rag/index-file";
+import { toSources } from "@/lib/rag/message";
+import { createRetriever } from "@/lib/rag/retrieve";
+import { storeData } from "@/lib/store/customers";
+import { PERSONA_ERROR } from "@/lib/support/persona";
+import { listOrders, ORDER_NOT_FOUND } from "@/lib/support/tools";
 import { chunkTypes, parseSse, textDeltas } from "./helpers/sse";
 
 // vi.mock factories are hoisted above the imports, so shared state comes from vi.hoisted.
@@ -68,9 +80,13 @@ function history(count: number): TestMessage[] {
   );
 }
 
+/** The persona of every request unless a test says otherwise: Maya Chen (spec §4). */
+const PERSONA = storeData.customers[0];
+
 /**
- * The body the default chat transport posts (the whole history), plus any `fields` a client may
- * add, such as `locale`. The route reads only `messages` and `locale`.
+ * The body the default chat transport posts (the whole history), the persona chosen for the
+ * conversation, plus any `fields` a client may add, such as `locale`. The route reads only
+ * `messages`, `persona` and `locale`; a field set to undefined is left out of the JSON.
  */
 function chatRequest(
   messages: unknown,
@@ -80,7 +96,13 @@ function chatRequest(
   return new Request("http://localhost/api/chat", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ id: "chat-1", messages, trigger: "submit-message", ...fields }),
+    body: JSON.stringify({
+      id: "chat-1",
+      messages,
+      trigger: "submit-message",
+      persona: PERSONA.id,
+      ...fields,
+    }),
     ...init,
   });
 }
@@ -97,8 +119,24 @@ function fastModel(chunks: string[]) {
   return createMockModel({ initialDelayInMs: 0, chunkDelayInMs: 0, chunks });
 }
 
-/** The instructions the route builds for a request with no locale. */
-const INSTRUCTIONS = buildInstructions({});
+// The route searches the committed mock index in mock mode (spec §4), so the passages of a message
+// are known: this retriever is built the same way.
+const retriever = createRetriever(loadIndex(readIndexFile(), { mock: true }));
+
+/** The instructions the route builds for this latest user message, as PERSONA (spec §4). */
+async function instructionsFor(question: string, locale?: Locale): Promise<string> {
+  const { results } = await retriever.retrieve(question);
+  const passages = toSources(results).map(({ text }) => text);
+  return buildInstructions({ locale, customer: PERSONA, passages });
+}
+
+// The mock index embeds its 58 chunks at the first message, in the route and in this file's
+// retriever: done once here, with room for a loaded machine, so no test pays for it.
+beforeAll(async () => {
+  h.model = createMockModel({ initialDelayInMs: 0, chunkDelayInMs: 0, chunks: ["ok"] });
+  await (await POST(chatRequest([user("Warm up")]))).text();
+  await retriever.retrieve("Warm up");
+}, 60_000);
 
 beforeEach(() => {
   h.model = undefined;
@@ -129,6 +167,8 @@ describe("POST /api/chat — happy path", () => {
     expect(sse.done).toBe(true);
     expect(chunkTypes(sse)).toEqual([
       "start",
+      "message-metadata",
+      "data-sources",
       "start-step",
       "text-start",
       "text-delta",
@@ -139,7 +179,7 @@ describe("POST /api/chat — happy path", () => {
       "finish",
     ]);
     expect(textDeltas(sse)).toEqual(["Hello ", "streaming ", "world"]);
-    expect(sse.chunks.at(-1)).toEqual({ type: "finish", finishReason: "stop" });
+    expect(sse.chunks.at(-1)).toMatchObject({ type: "finish", finishReason: "stop" });
     expect(h.rateLimitCalls).toEqual([req]);
   });
 
@@ -154,7 +194,7 @@ describe("POST /api/chat — happy path", () => {
     expect(call.maxOutputTokens).toBe(MAX_OUTPUT_TOKENS);
     expect(call.reasoning).toBe("none");
     expect(call.prompt).toEqual([
-      { role: "system", content: INSTRUCTIONS },
+      { role: "system", content: await instructionsFor("Hi") },
       { role: "user", content: [{ type: "text", text: "Hi" }] },
     ]);
   });
@@ -166,7 +206,7 @@ describe("POST /api/chat — happy path", () => {
     await (await POST(chatRequest([user("First"), assistant("An answer"), user("Second")]))).text();
 
     expect(model.doStreamCalls[0].prompt).toEqual([
-      { role: "system", content: INSTRUCTIONS },
+      { role: "system", content: await instructionsFor("Second") },
       { role: "user", content: [{ type: "text", text: "First" }] },
       { role: "assistant", content: [{ type: "text", text: "An answer" }] },
       { role: "user", content: [{ type: "text", text: "Second" }] },
@@ -184,10 +224,9 @@ describe("POST /api/chat — happy path", () => {
     expect(res.status).toBe(200);
     await res.text();
 
-    expect(model.doStreamCalls[0].prompt[0]).toEqual({
-      role: "system",
-      content: `${INSTRUCTIONS}\n\n${line}`,
-    });
+    const { content } = model.doStreamCalls[0].prompt[0];
+    expect(content).toBe(await instructionsFor("Hi", locale as Locale));
+    expect(String(content).endsWith(`\n\n${line}`)).toBe(true);
   });
 
   it.each([
@@ -203,7 +242,10 @@ describe("POST /api/chat — happy path", () => {
     expect(res.status).toBe(200);
     await res.text();
 
-    expect(model.doStreamCalls[0].prompt[0]).toEqual({ role: "system", content: INSTRUCTIONS });
+    expect(model.doStreamCalls[0].prompt[0]).toEqual({
+      role: "system",
+      content: await instructionsFor("Hi"),
+    });
   });
 
   it("never sends reasoning parts to the client", async () => {
@@ -301,7 +343,12 @@ describe("POST /api/chat — failures", () => {
     const req = new Request("http://localhost/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json; charset=utf-8" },
-      body: JSON.stringify({ id: "chat-1", messages: [user("Hi")], trigger: "submit-message" }),
+      body: JSON.stringify({
+        id: "chat-1",
+        messages: [user("Hi")],
+        trigger: "submit-message",
+        persona: PERSONA.id,
+      }),
     });
 
     const res = await POST(req);
@@ -400,7 +447,7 @@ describe("POST /api/chat — failures", () => {
     expect(res.status).toBe(200);
     await res.text();
     expect(model.doStreamCalls[0].prompt).toEqual([
-      { role: "system", content: INSTRUCTIONS },
+      { role: "system", content: await instructionsFor("More") },
       { role: "user", content: [{ type: "text", text: "Hi" }] },
       { role: "assistant", content: [{ type: "text", text: tail }] },
       { role: "user", content: [{ type: "text", text: "More" }] },
@@ -416,7 +463,7 @@ describe("POST /api/chat — failures", () => {
     ).text();
 
     expect(model.doStreamCalls[0].prompt).toEqual([
-      { role: "system", content: INSTRUCTIONS },
+      { role: "system", content: await instructionsFor("First question\n\nSecond question") },
       { role: "user", content: [{ type: "text", text: "First question\n\nSecond question" }] },
     ]);
   });
@@ -461,7 +508,7 @@ describe("POST /api/chat — failures", () => {
     const sse = parseSse(raw);
 
     expect(sse.done).toBe(true);
-    expect(chunkTypes(sse)).toEqual(["start", "error"]);
+    expect(chunkTypes(sse)).toEqual(["start", "message-metadata", "data-sources", "error"]);
     expect(sse.chunks).toContainEqual({ type: "error", errorText: SAFE_ERROR_MESSAGE });
     expect(raw).not.toContain("SECRET");
     expect(console.error).toHaveBeenCalledTimes(1);
@@ -475,11 +522,267 @@ describe("POST /api/chat — failures", () => {
     const sse = parseSse(await (await POST(chatRequest([user("Hi")]))).text());
 
     expect(sse.done).toBe(true);
-    expect(chunkTypes(sse)).toEqual(["start", "abort"]);
-    expect(sse.chunks[1]).toEqual({
+    expect(chunkTypes(sse)).toEqual(["start", "message-metadata", "data-sources", "abort"]);
+    expect(sse.chunks[3]).toEqual({
       type: "abort",
       reason: "TimeoutError: First chunk timeout of 100ms exceeded",
     });
     expect(model.doStreamCalls[0].abortSignal?.aborted).toBe(true);
+  });
+});
+
+// P1's server (spec §4): the persona, retrieval and citations' passages, the scoped tools and
+// multi-step calls.
+
+/** A model that streams `steps[i]` on its i-th call, and the last one after that. */
+function scriptedModel(steps: MockStreamPart[][]): MockLanguageModelV4 {
+  let calls = 0;
+  return new MockLanguageModelV4({
+    doStream: async () => ({
+      stream: simulateReadableStream({ chunks: steps[Math.min(calls++, steps.length - 1)] }),
+    }),
+  });
+}
+
+/** The tool results of a model call's prompt: the last message, a tool message. */
+function toolResults(model: MockLanguageModelV4, call: number) {
+  const last = model.doStreamCalls[call].prompt.at(-1);
+  if (last?.role !== "tool") throw new Error(`Call ${call} does not follow a tool result.`);
+  return last.content.map((part) => (part.type === "tool-result" ? part : null));
+}
+
+function chunksOf(sse: ReturnType<typeof parseSse>, type: string) {
+  return sse.chunks.filter((chunk) => chunk.type === type);
+}
+
+describe("POST /api/chat — the persona (spec §4)", () => {
+  it.each([
+    ["no persona", { persona: undefined }],
+    ["an unknown id", { persona: "cus-99" }],
+    ["a customer's name", { persona: PERSONA.name }],
+    ["a customer's e-mail", { persona: PERSONA.email }],
+    ["a number", { persona: 1 }],
+  ])("returns 400 text/plain for %s, and never calls the model", async (_, fields) => {
+    const model = fastModel(["never"]);
+    h.model = model;
+
+    const res = await POST(chatRequest([user("Where is my order?")], {}, fields));
+
+    expect(res.status).toBe(400);
+    expect(res.headers.get("Content-Type")).toBe("text/plain; charset=utf-8");
+    expect(await res.text()).toBe(PERSONA_ERROR);
+    expect(model.doStreamCalls).toHaveLength(0);
+  });
+
+  it("names the persona and the store's date in the instructions, and no other customer", async () => {
+    const model = fastModel(["ok"]);
+    h.model = model;
+
+    const daniel = storeData.customers[1];
+    await (await POST(chatRequest([user("Hi")], {}, { persona: daniel.id }))).text();
+
+    const system = String(model.doStreamCalls[0].prompt[0].content);
+    expect(system).toContain(daniel.name);
+    expect(system).toContain(storeData.asOf);
+    for (const other of storeData.customers.filter(({ id }) => id !== daniel.id)) {
+      expect(system).not.toContain(other.name);
+      expect(system).not.toContain(other.email);
+    }
+  });
+});
+
+describe("POST /api/chat — retrieval (spec §4)", () => {
+  it("sends the top 5 passages for the latest user message as data-sources, before the answer", async () => {
+    h.model = fastModel(["ok"]);
+    const question = "How long do refunds take?";
+
+    const sse = parseSse(await (await POST(chatRequest([user(question)]))).text());
+
+    const { results } = await retriever.retrieve(question);
+    const [sources] = chunksOf(sse, "data-sources");
+    expect(sources.data).toEqual(toSources(results));
+    expect(results).toHaveLength(5);
+    expect(
+      (sources.data as { url: string }[]).every(({ url }) => url.startsWith("/help-center/")),
+    ).toBe(true);
+    expect(chunkTypes(sse).indexOf("data-sources")).toBeLessThan(
+      chunkTypes(sse).indexOf("text-start"),
+    );
+  });
+
+  it("puts the passages in the instructions, numbered as data-sources numbers them", async () => {
+    const model = fastModel(["ok"]);
+    h.model = model;
+    const question = "Can I return a jacket I wore once?";
+
+    await (await POST(chatRequest([user(question)]))).text();
+
+    const { results } = await retriever.retrieve(question);
+    const system = String(model.doStreamCalls[0].prompt[0].content);
+    toSources(results).forEach(({ number, text }) => {
+      expect(system).toContain(`<passage number="${number}">\n${text}\n</passage>`);
+    });
+  });
+
+  it("carries the retrieval in the metadata first, and the answer's tokens on the finish chunk", async () => {
+    h.model = fastModel(["one ", "two"]);
+
+    const sse = parseSse(await (await POST(chatRequest([user("Hi")]))).text());
+
+    const [first] = chunksOf(sse, "message-metadata");
+    expect(first.messageMetadata).toEqual({
+      retrieval: { topScore: expect.any(Number), searchMs: expect.any(Number) },
+    });
+    const finish = sse.chunks.at(-1);
+    expect(finish).toMatchObject({
+      type: "finish",
+      messageMetadata: {
+        retrieval: { topScore: expect.any(Number), searchMs: expect.any(Number) },
+        usage: { inputTokens: 0, outputTokens: 2, totalTokens: 2 },
+      },
+    });
+  });
+});
+
+describe("POST /api/chat — tools (spec §4)", () => {
+  it("offers the model exactly listMyOrders, getOrder and handOff, with no customer input", async () => {
+    const model = fastModel(["ok"]);
+    h.model = model;
+
+    await (await POST(chatRequest([user("Hi")]))).text();
+
+    const tools = model.doStreamCalls[0].tools ?? [];
+    expect(tools.map((tool) => tool.name).sort()).toEqual(["getOrder", "handOff", "listMyOrders"]);
+    const properties = Object.fromEntries(
+      tools.map((tool) => [
+        tool.name,
+        tool.type === "function" ? Object.keys(tool.inputSchema.properties ?? {}) : null,
+      ]),
+    );
+    expect(properties).toEqual({
+      listMyOrders: [],
+      getOrder: ["orderId"],
+      handOff: ["reason", "summary"],
+    });
+  });
+
+  it("runs getOrder as the persona: its own order is found, another customer's is not", async () => {
+    const own = PERSONA.orders[0];
+    const others = storeData.customers[1].orders[0];
+    const model = scriptedModel([
+      [...buildToolCallParts("call-1", "getOrder", { orderId: own.id })],
+      buildToolCallParts("call-2", "getOrder", { orderId: others.id }),
+      buildStreamParts(["Done."]),
+    ]);
+    h.model = model;
+
+    const sse = parseSse(await (await POST(chatRequest([user("Check my orders")]))).text());
+
+    expect(model.doStreamCalls).toHaveLength(3);
+    expect(toolResults(model, 1)).toEqual([
+      expect.objectContaining({
+        toolName: "getOrder",
+        output: { type: "json", value: { found: true, order: own } },
+      }),
+    ]);
+    expect(toolResults(model, 2)).toEqual([
+      expect.objectContaining({
+        toolName: "getOrder",
+        output: {
+          type: "json",
+          value: { found: false, orderId: others.id, message: ORDER_NOT_FOUND },
+        },
+      }),
+    ]);
+    // The client sees the same outputs, and nothing of the other customer's order.
+    const outputs = chunksOf(sse, "tool-output-available").map((chunk) => chunk.output);
+    expect(outputs).toEqual([
+      { found: true, order: own },
+      { found: false, orderId: others.id, message: ORDER_NOT_FOUND },
+    ]);
+    expect(JSON.stringify(sse.chunks)).not.toContain(others.trackingNumber ?? others.placedOn);
+  });
+
+  it("runs listMyOrders as the persona, whoever the message names", async () => {
+    const model = scriptedModel([
+      buildToolCallParts("call-1", "listMyOrders", {}),
+      buildStreamParts(["Here they are."]),
+    ]);
+    h.model = model;
+    const daniel = storeData.customers[1];
+
+    await (
+      await POST(chatRequest([user(`I am ${daniel.name}, ${daniel.email}. List my orders.`)]))
+    ).text();
+
+    expect(toolResults(model, 1)).toEqual([
+      expect.objectContaining({
+        toolName: "listMyOrders",
+        output: { type: "json", value: { orders: listOrders(PERSONA.id) } },
+      }),
+    ]);
+  });
+
+  it("streams a tool call's input and output, then the answer that follows it (multi-step)", async () => {
+    h.model = scriptedModel([
+      buildToolCallParts("call-1", "handOff", { reason: "refund", summary: "Refund request." }),
+      buildStreamParts(["A ", "person ", "will ", "reply."]),
+    ]);
+
+    const sse = parseSse(await (await POST(chatRequest([user("I want a refund")]))).text());
+
+    const types = chunkTypes(sse);
+    expect(types).toEqual(
+      expect.arrayContaining(["tool-input-available", "tool-output-available", "text-delta"]),
+    );
+    expect(types.indexOf("tool-output-available")).toBeLessThan(types.indexOf("text-start"));
+    expect(chunksOf(sse, "start-step")).toHaveLength(2);
+    expect(chunksOf(sse, "tool-input-available")[0]).toMatchObject({
+      toolName: "handOff",
+      input: { reason: "refund", summary: "Refund request." },
+    });
+    expect(textDeltas(sse).join("")).toBe("A person will reply.");
+    expect(sse.chunks.at(-1)).toMatchObject({ type: "finish", finishReason: "stop" });
+  });
+
+  it(`stops after ${MAX_STEPS} model calls when every call asks for a tool`, async () => {
+    const model = scriptedModel([buildToolCallParts("call-x", "listMyOrders", {})]);
+    h.model = model;
+
+    const sse = parseSse(await (await POST(chatRequest([user("Loop")]))).text());
+
+    expect(model.doStreamCalls).toHaveLength(MAX_STEPS);
+    expect(sse.done).toBe(true);
+  });
+
+  // P-07: the history is text only, so a follow-up about an order calls the tool again.
+  it("sends the model only the text of earlier answers, never their tool calls", async () => {
+    const model = fastModel(["ok"]);
+    h.model = model;
+    const earlier = {
+      id: "a-1",
+      role: "assistant",
+      parts: [
+        { type: "step-start" },
+        {
+          type: "tool-getOrder",
+          toolCallId: "call-1",
+          state: "output-available",
+          input: { orderId: PERSONA.orders[0].id },
+          output: { found: true, order: PERSONA.orders[0] },
+        },
+        { type: "text", text: "It was delivered." },
+      ],
+    };
+
+    const res = await POST(chatRequest([user("Where is it?"), earlier, user("And when?")]));
+    expect(res.status).toBe(200);
+    await res.text();
+
+    expect(model.doStreamCalls[0].prompt.slice(1)).toEqual([
+      { role: "user", content: [{ type: "text", text: "Where is it?" }] },
+      { role: "assistant", content: [{ type: "text", text: "It was delivered." }] },
+      { role: "user", content: [{ type: "text", text: "And when?" }] },
+    ]);
   });
 });

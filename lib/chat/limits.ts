@@ -19,3 +19,10 @@ export const MAX_MESSAGES = 20;
  * cap usually fits, and a forged history cannot carry much more (limits.test.ts ties the two).
  */
 export const MAX_ASSISTANT_CHARS = 6000;
+
+/**
+ * Most model calls in one answer (spec §4: tools with multi-step calls). An order question takes
+ * up to three (listMyOrders, getOrder, the reply); the rest is headroom for a hand-off after a
+ * lookup. With MAX_OUTPUT_TOKENS per call, it bounds an answer's output at MAX_STEPS times the cap.
+ */
+export const MAX_STEPS = 5;

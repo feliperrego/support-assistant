@@ -2,6 +2,7 @@ import { AppChat } from "@/components/app-chat";
 import { Footer } from "@/components/footer";
 import { IS_MOCK, MODEL_LABEL } from "@/lib/ai/model";
 import { RATE_LIMIT_PER_HOUR } from "@/lib/rate-limit";
+import { PERSONA_IDS } from "@/lib/support/persona";
 
 /**
  * The chat page (X-01 design §4.5). Project-owned. A server component: lib/ai/model.ts and
@@ -17,6 +18,8 @@ export default function Home() {
         isMock={IS_MOCK}
         commit={process.env.VERCEL_GIT_COMMIT_SHA ?? "local"}
         rateLimitPerHour={RATE_LIMIT_PER_HOUR}
+        // The first customer until the persona picker exists (spec §1, item 4).
+        persona={PERSONA_IDS[0]}
       />
       <Footer />
     </div>

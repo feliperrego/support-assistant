@@ -5,14 +5,14 @@ import {
   MOCK_ERROR_MESSAGE,
   MOCK_SCENARIO_TIMING,
   SLOW_CHUNKS,
-  selectScenario,
-  type MockScenarioName,
+  mockStep,
+  type MockStep,
   type MockTiming,
 } from "./mock-scenarios";
 
 type MockStreamResult = Awaited<ReturnType<MockLanguageModelV4["doStream"]>>;
 
-/** One part of a V4 model stream (text-start, text-delta, text-end, finish, error, ...). */
+/** One part of a V4 model stream (text-start, text-delta, text-end, tool-call, finish, error, ...). */
 export type MockStreamPart =
   MockStreamResult["stream"] extends ReadableStream<infer T> ? T : never;
 
@@ -40,20 +40,39 @@ export function toWordChunks(text: string): string[] {
   return text.match(/\S+\s*/g) ?? [];
 }
 
+function finishPart(reason: "stop" | "tool-calls", outputTokens: number): MockStreamPart {
+  return {
+    type: "finish",
+    finishReason: { unified: reason, raw: undefined },
+    usage: {
+      inputTokens: { total: 0, noCache: 0, cacheRead: undefined, cacheWrite: undefined },
+      outputTokens: { total: outputTokens, text: outputTokens, reasoning: undefined },
+    },
+  };
+}
+
 export function buildStreamParts(chunks: readonly string[]): MockStreamPart[] {
   const id = "text-1";
   return [
     { type: "text-start", id },
     ...chunks.map((delta): MockStreamPart => ({ type: "text-delta", id, delta })),
     { type: "text-end", id },
-    {
-      type: "finish",
-      finishReason: { unified: "stop", raw: undefined },
-      usage: {
-        inputTokens: { total: 0, noCache: 0, cacheRead: undefined, cacheWrite: undefined },
-        outputTokens: { total: chunks.length, text: chunks.length, reasoning: undefined },
-      },
-    },
+    finishPart("stop", chunks.length),
+  ];
+}
+
+/**
+ * One tool call and the finish of its step (spec §4: tool calling with multi-step calls).
+ * streamText runs the tool and calls the model again with its result.
+ */
+export function buildToolCallParts(
+  toolCallId: string,
+  toolName: string,
+  input: Record<string, unknown>,
+): MockStreamPart[] {
+  return [
+    { type: "tool-call", toolCallId, toolName, input: JSON.stringify(input) },
+    finishPart("tool-calls", 1),
   ];
 }
 
@@ -72,21 +91,24 @@ export function buildErrorStreamParts(chunks: readonly string[]): MockStreamPart
   ];
 }
 
-export function scenarioStreamParts(scenario: MockScenarioName): MockStreamPart[] {
-  switch (scenario) {
+/** The stream of one mock step: words, a tool call, the slow lines or the failure. */
+export function stepStreamParts(step: MockStep): MockStreamPart[] {
+  switch (step.kind) {
     case "slow":
       return buildStreamParts(SLOW_CHUNKS);
     case "error":
       return buildErrorStreamParts(ERROR_CHUNKS);
-    default:
-      return buildStreamParts(toWordChunks(DEFAULT_MOCK_TEXT));
+    case "tool-call":
+      return buildToolCallParts(step.toolCallId, step.toolName, step.input);
+    case "text":
+      return buildStreamParts(toWordChunks(step.text));
   }
 }
 
 /**
- * The mock that getModel() returns in mock mode: every doStream call picks
- * default, [[slow]] or [[error]] from the last user message (X-01 design §4.2).
- * Tests may pass a faster timing; the scenario choice stays the same.
+ * The mock that getModel() returns in mock mode (template spec §5.2; spec §4): every doStream call
+ * takes its next step from the prompt (lib/ai/mock-scenarios.ts mockStep). Tests and the mock eval
+ * may pass a faster timing; the steps stay the same.
  */
 export function createScenarioMockModel(
   timing: MockTiming = MOCK_SCENARIO_TIMING,
@@ -94,7 +116,7 @@ export function createScenarioMockModel(
   return new MockLanguageModelV4({
     doStream: async ({ prompt }) => ({
       stream: simulateReadableStream({
-        chunks: scenarioStreamParts(selectScenario(prompt)),
+        chunks: stepStreamParts(mockStep(prompt)),
         initialDelayInMs: timing.initialDelayInMs,
         chunkDelayInMs: timing.chunkDelayInMs,
       }),

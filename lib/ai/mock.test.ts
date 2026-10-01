@@ -9,11 +9,13 @@ import {
   createScenarioMockModel,
   toWordChunks,
 } from "./mock";
+import { formatPassages } from "@/lib/rag/prompt";
 import {
   ERROR_CHUNKS,
   MOCK_ERROR_MESSAGE,
   MOCK_SCENARIO_TIMING,
   SLOW_CHUNKS,
+  citedAnswer,
   lastUserText,
   resetMockScenarios,
   selectScenario,
@@ -109,9 +111,10 @@ function userPrompt(...texts: string[]): MockPrompt {
 }
 
 /** Streams one user message through streamText and collects text and error parts. */
-async function streamOnce(model: MockLanguageModelV4, text: string) {
+async function streamOnce(model: MockLanguageModelV4, text: string, instructions?: string) {
   const result = streamText({
     model,
+    instructions,
     messages: [{ role: "user", content: text }],
     maxOutputTokens: 100,
   });
@@ -154,15 +157,15 @@ describe("mock scenarios", () => {
   });
 
   describe("selectScenario", () => {
-    it("picks default without a trigger and slow for [[slow]]", () => {
-      expect(selectScenario(userPrompt("Tell me a story"))).toBe("default");
+    it("picks the cited answer without a trigger and slow for [[slow]]", () => {
+      expect(selectScenario(userPrompt("Tell me a story"))).toBe("cited-answer");
       expect(selectScenario(userPrompt("[[slow]] please"))).toBe("slow");
       expect(selectScenario(userPrompt("[[slow]] please"))).toBe("slow");
     });
 
     it("picks error only the first time it sees the exact prompt text", () => {
       expect(selectScenario(userPrompt("[[error]] once"))).toBe("error");
-      expect(selectScenario(userPrompt("[[error]] once"))).toBe("default");
+      expect(selectScenario(userPrompt("[[error]] once"))).toBe("cited-answer");
       expect(selectScenario(userPrompt("[[error]] once again"))).toBe("error");
     });
 
@@ -173,7 +176,7 @@ describe("mock scenarios", () => {
 
     it("looks only at the last user message", () => {
       expect(selectScenario(userPrompt("[[error]] earlier", "[[slow]] now"))).toBe("slow");
-      expect(selectScenario(userPrompt("[[slow]] earlier", "plain now"))).toBe("default");
+      expect(selectScenario(userPrompt("[[slow]] earlier", "plain now"))).toBe("cited-answer");
     });
   });
 
@@ -201,9 +204,24 @@ describe("mock scenarios", () => {
   });
 
   describe("createScenarioMockModel", () => {
-    it("streams the default paragraph without a trigger", async () => {
-      const run = await streamOnce(createScenarioMockModel(FAST), "Tell me something");
-      expect(run.text).toBe(DEFAULT_MOCK_TEXT);
+    it("streams the cited answer without a trigger, quoting the passages of its instructions", async () => {
+      const passages = [
+        "## Return window\n\nYou can return an item within 30 days of delivery, unused.",
+        "## Refunds\n\nWe refund your original payment method within 5 business days.",
+      ];
+      const instructions = `Rules.\n\n${formatPassages(passages)}`;
+      const run = await streamOnce(
+        createScenarioMockModel(FAST),
+        "Tell me something",
+        instructions,
+      );
+      expect(run.text).toBe(citedAnswer(passages));
+      expect(run.text).toContain(
+        '[1: "You can return an item within 30 days of delivery, unused."]',
+      );
+      expect(run.text).toContain(
+        '[2: "We refund your original payment method within 5 business days."]',
+      );
       expect(run.errors).toEqual([]);
     });
 
@@ -222,7 +240,7 @@ describe("mock scenarios", () => {
       expect((first.errors[0] as Error).message).toBe(MOCK_ERROR_MESSAGE);
 
       const retry = await streamOnce(model, "[[error]] retry me");
-      expect(retry.text).toBe(DEFAULT_MOCK_TEXT);
+      expect(retry.text).toBe(citedAnswer([]));
       expect(retry.errors).toEqual([]);
       expect(model.doStreamCalls).toHaveLength(2);
     });

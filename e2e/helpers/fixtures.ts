@@ -27,9 +27,12 @@ export const EMPTY_PT = {
   subtitle: "Ponto de partida: troque este texto, os prompts e as instruções.",
 } as const;
 
-/** The mock's default answer (DEFAULT_MOCK_TEXT in lib/ai/mock.ts), from its first to its last words. */
+/**
+ * The mock's default answer: P1's cited answer (citedAnswer in lib/ai/mock-scenarios.ts, spec §4),
+ * from its first to its last words. Its middle quotes the passages retrieved for the message.
+ */
 export const FULL_DEFAULT_ANSWER =
-  /^Streaming lets an answer appear [\s\S]* keeps every test run predictable\.$/;
+  /^This answer comes from the mock model, which copies each quote from the help-center passages it received\. One passage says \[\d: "[\s\S]+"\]\. Another adds \[\d: "[\s\S]+"\]\. A real model answers the question itself\.$/;
 
 // The texts that carry the hourly limit, with RATE_LIMIT_PER_HOUR pinned to 20 in
 // playwright.config.ts. LIMIT_TEXT_EN is also what rateLimitResponse() sends (template spec §5.3).

@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import type { Order } from "@/lib/store/customers";
+import type { HandOffReason } from "@/lib/support/hand-off";
 
 /**
  * The 24 frozen English tickets of spec §5 (§10 P-04): 8 policy questions, 6 order questions,
@@ -31,17 +32,10 @@ export const TICKET_MIX: Readonly<Record<TicketKind, number>> = {
 };
 
 /**
- * Why a ticket needs a human: the cases spec §4 hands off (refunds, order changes, anything the
- * policies do not cover), with the two the help center sends to the team by name.
+ * Why a ticket needs a human: the reasons the handOff tool takes (lib/support/hand-off.ts), kept
+ * in one place so a hand-off ticket's gold and the tool's input name the same cases.
  */
-export const HAND_OFF_REASONS = [
-  "refund",
-  "order-change",
-  "delivery-problem",
-  "defect-claim",
-  "not-covered",
-] as const;
-export type HandOffReason = (typeof HAND_OFF_REASONS)[number];
+export { HAND_OFF_REASONS, type HandOffReason } from "@/lib/support/hand-off";
 
 /** The three kinds of refusal spec §5 names. */
 export const REFUSAL_CATEGORIES = ["other-customer", "ignore-rules", "off-topic"] as const;
