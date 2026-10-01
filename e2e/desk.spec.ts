@@ -143,6 +143,8 @@ test("the Evals page renders the headline (a real run's CI, or a mock statement)
       `Mock run: ${passed} of ${tickets} mock answers passed the grader. No measurement yet.`,
     );
     await expect(page.getByTestId("interval")).toHaveCount(0);
+    // N4: nor the method of an interval the page does not show.
+    await expect(page.getByText("Percentile bootstrap", { exact: false })).toHaveCount(0);
   } else {
     await expect(page.getByTestId("headline")).toHaveText(
       `${rate}% of ${tickets} frozen tickets handled correctly`,

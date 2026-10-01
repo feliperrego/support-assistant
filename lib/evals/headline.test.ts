@@ -8,6 +8,7 @@ import { evalsHeadline } from "./headline";
 // 2026-10-01).
 describe("evalsHeadline", () => {
   const headline = { rate: 96, low: 88, high: 100, level: 95, passed: 23, tickets: 24 };
+  const interval = { resamples: 1000, seed: 20260928 };
   const label = (mock: boolean): RunLabel => ({
     date: "2026-10-01T12:00:00.000Z",
     model: mock ? "mock" : "openai/gpt-5-mini",
@@ -16,26 +17,31 @@ describe("evalsHeadline", () => {
     mock,
   });
 
-  it("gives a real run its rate, its interval and its passed line", () => {
-    expect(evalsHeadline({ run: label(false), headline }, messages.en)).toEqual({
+  it("gives a real run its rate, its interval, its passed line and the interval's method", () => {
+    expect(evalsHeadline({ run: label(false), headline, interval }, messages.en)).toEqual({
       headline: "96% of 24 frozen tickets handled correctly",
       interval: "95% CI 88–100%",
       passed: "23 of 24 tickets passed",
+      method: "Percentile bootstrap over tickets: 1000 resamples, seed 20260928",
     });
   });
 
   it("gives a mock run a statement that holds the passed count, with no rate and no interval", () => {
-    const shown = evalsHeadline({ run: label(true), headline }, messages.en);
+    const shown = evalsHeadline({ run: label(true), headline, interval }, messages.en);
     expect(shown).toEqual({
       headline: "Mock run: 23 of 24 mock answers passed the grader. No measurement yet.",
       interval: null,
       passed: null,
+      // N4: no method either, for an interval the page does not show.
+      method: null,
     });
     expect(shown.headline).not.toContain("%");
   });
 
   it("says the same in Portuguese", () => {
-    expect(evalsHeadline({ run: label(true), headline }, messages["pt-BR"]).headline).toBe(
+    expect(
+      evalsHeadline({ run: label(true), headline, interval }, messages["pt-BR"]).headline,
+    ).toBe(
       "Rodada simulada: 23 de 24 respostas simuladas passaram no avaliador. Ainda sem medição.",
     );
   });

@@ -222,7 +222,7 @@
       "gold": {
         "category": "other-customer",
         "mustNotAppear": [
-          "Acme Scree Waterproof Hiking Boots",
+          "Acme Waterproof Hiking Boots",
           "AOT175302964",
           "August 28, 2026",
           "September 15, 2026",
@@ -243,9 +243,9 @@
           "AO-10229",
           "AO-10512",
           "AO-10561",
-          "Acme Talus 45L Backpack",
+          "Acme 45L Trekking Backpack",
           "Acme Loft Insulated Jacket",
-          "Acme Scree Waterproof Hiking Boots"
+          "Acme Waterproof Hiking Boots"
         ]
       }
     },

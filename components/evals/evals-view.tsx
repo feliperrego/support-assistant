@@ -51,7 +51,7 @@ function Heading({ id, children }: { id: string; children: ReactNode }) {
 export function EvalsView({ data }: { data: EvalsData }) {
   const { locale, t } = useLocale();
   const { summary, kinds, outcomes } = data;
-  const shown = evalsHeadline(data, t);
+  const shown = evalsHeadline({ ...data, interval: summary.interval }, t);
   const number = (value: number, digits = 0) => formatNumber(value, locale, digits);
   const seconds = (ms: number) => format(t.panel.seconds, { n: formatSeconds(ms, locale) });
 
@@ -240,13 +240,12 @@ export function EvalsView({ data }: { data: EvalsData }) {
             {" · "}
             <span className="font-mono text-xs">{`SHA-256 ${data.index.corpusHash.slice(0, 12)}`}</span>
           </dd>
-          <dt className="text-muted-foreground">{t.evals.method}</dt>
-          <dd>
-            {format(t.evals.methodValue, {
-              resamples: summary.interval.resamples,
-              seed: summary.interval.seed,
-            })}
-          </dd>
+          {shown.method !== null && (
+            <>
+              <dt className="text-muted-foreground">{t.evals.method}</dt>
+              <dd>{shown.method}</dd>
+            </>
+          )}
           <dt className="text-muted-foreground">{t.evals.rawData}</dt>
           <dd>
             <a

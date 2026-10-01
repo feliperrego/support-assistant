@@ -41,7 +41,7 @@
           "shippingMethod": "standard",
           "items": [
             {
-              "name": "Acme Talus 45L Backpack",
+              "name": "Acme 45L Trekking Backpack",
               "variant": "Slate gray",
               "quantity": 1,
               "price": 179
@@ -69,7 +69,7 @@
           "shippingMethod": "standard",
           "items": [
             {
-              "name": "Acme Scree Waterproof Hiking Boots",
+              "name": "Acme Waterproof Hiking Boots",
               "variant": "Men's 10",
               "quantity": 1,
               "price": 164
@@ -120,7 +120,7 @@
           "shippingMethod": "standard",
           "items": [
             {
-              "name": "Acme Ember 20°F Down Sleeping Bag",
+              "name": "Acme 20°F Down Sleeping Bag",
               "variant": "Regular",
               "quantity": 1,
               "price": 239
@@ -141,7 +141,7 @@
           "shippingMethod": "standard",
           "items": [
             {
-              "name": "Acme Cirrus Rain Jacket",
+              "name": "Acme Rain Jacket",
               "variant": "Women's S, Blue",
               "quantity": 1,
               "price": 149
@@ -162,7 +162,7 @@
           "shippingMethod": "standard",
           "items": [
             {
-              "name": "Acme Switchback Trekking Poles",
+              "name": "Acme Trekking Poles",
               "quantity": 1,
               "price": 89
             },
@@ -244,7 +244,7 @@
           "shippingMethod": "standard",
           "items": [
             {
-              "name": "Acme Talus 45L Backpack",
+              "name": "Acme 45L Trekking Backpack",
               "variant": "Forest green",
               "quantity": 1,
               "price": 179
@@ -286,7 +286,7 @@
           "shippingMethod": "standard",
           "items": [
             {
-              "name": "Acme Scree Waterproof Hiking Boots",
+              "name": "Acme Waterproof Hiking Boots",
               "variant": "Women's 8",
               "quantity": 1,
               "price": 164

@@ -34,6 +34,15 @@ describe("the fictional data", () => {
     }
   });
 
+  it("names no product after a real outdoor product of the same kind (D16, N1–N2)", () => {
+    // Found by the web check of 2026-10-01: Talus packs (TETON Sports, REI, Marmot), the Ember
+    // down quilt (Sea to Summit), Scree boots (Vasque, Trespass), Switchback poles (Black Diamond)
+    // and Cirrus rain jackets. The house brand's products carry descriptive names instead.
+    for (const { file, content } of files) {
+      expect(content.match(/\b(?:Talus|Ember|Scree|Switchback|Cirrus)\b/g), file).toBeNull();
+    }
+  });
+
   it("finds the hosts it must check", () => {
     // Guards the patterns above: e-mail domains and links are both seen, local parts are not.
     expect(

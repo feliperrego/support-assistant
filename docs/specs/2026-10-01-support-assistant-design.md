@@ -71,7 +71,7 @@ Unit: tool scoping (a persona never reads another's orders), the scorer's four p
 3. Run the eval (24 tickets, cents), commit the JSON, the README line and the inbox transcripts; read the run's dollar cost from the AI Gateway dashboard into the README [D: D8].
 4. Deploy, check in production, phone check.
 
-Before step 1 makes the product names public, the web check of D16 is done and its renames, if any, are applied [D: D16]; tickets that name a product change with them, before the first run.
+Before step 1 makes the product names public, the web check of D16 is done and its renames, if any, are applied [D: D16]; tickets that name a product change with them, before the first run. *Done on 2026-10-01: N1–N3 of §11, pinned by tests/fictional-data.test.ts.*
 
 Size: 2–3 agent days [P: estimate].
 
@@ -91,6 +91,7 @@ Size: 2–3 agent days [P: estimate].
 | Embeddings in the template | P3 starts [D: Q6] |
 | A per-ticket check that a hand-off reply invents no policy (t19's "student discount") | The hand check of the first real run's transcripts finds a hand-off reply with an invented policy [D: D7] |
 | An order rule that fails a reply holding the gold status inside a negation | The hand check of a real run finds a negated status that passed [D: D4] |
+| A component test that renders the Evals headline block of a real run | None needed before: the commit of rollout step 3 runs the e2e's real-run branch in CI, which must pass before the deploy [D: N5] |
 
 ## 10. Proposals for Felipe
 
@@ -135,3 +136,15 @@ Approved by Felipe on 2026-10-01 ("todas ok"), after the build's review [D]. Lat
 | D14 | Latency: server time in the live Analysis, the eval's timing in the inbox, both labelled "Latency" |
 | D15 | Fixed now: the README's CI wording, #2's comments in `lib/rag/corpus.ts`, `readShownRun`'s unused parameter |
 | D16 | The product names are checked on the web against real outdoor products before the deploy |
+
+### Name check and review follow-ups
+
+Approved by Felipe on 2026-10-01 ("todas ok") [D]. The web check of D16 found same-kind real products named Talus (TETON Sports Talus 2700 pack; REI Co-op and Marmot Talus packs), Ember (Sea to Summit Ember down quilt), Scree (Vasque and Trespass Scree boots), Switchback (Black Diamond Switchback poles) and Cirrus (several smaller brands' Cirrus rain jackets); the overlaps of Basin, Lumen, Loft, Kettle and Merino were minor or generic words.
+
+| ID | Decision |
+|---|---|
+| N1 | Descriptive names, with no model word, for the four strong collisions: Acme 45L Trekking Backpack, Acme 20°F Down Sleeping Bag, Acme Waterproof Hiking Boots, Acme Trekking Poles |
+| N2 | Acme Cirrus Rain Jacket becomes Acme Rain Jacket |
+| N3 | Basin, Lumen, Loft, Kettle and Merino stay |
+| N4 | In mock mode, Run details shows no interval method either |
+| N5 | No component test for a real run's headline block: the step-3 commit's e2e covers it (trigger in §9) |
