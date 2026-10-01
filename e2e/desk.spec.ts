@@ -62,9 +62,12 @@ test("the inbox shows a recorded conversation with its chips, badge, panel and f
   await expect(page.getByTestId("checks").locator("li")).toHaveCount(first.checks.length);
   await expect(page.locator("[data-passage]")).toHaveCount(5);
 
-  // Another conversation: the recorded hand-off shows its card.
-  await conversationList(page).locator('[data-ticket="t15"]').click();
-  await expect(page).toHaveURL(/\/inbox\/t15/);
+  // Another conversation: a recorded hand-off shows its card. The ticket comes from the run, since
+  // a real run need not hand off on any given ticket.
+  const handedOff = run.results.find(({ actual }) => actual === "handed-off");
+  expect(handedOff, "the shown run has a hand-off to show").toBeDefined();
+  await conversationList(page).locator(`[data-ticket="${handedOff!.id}"]`).click();
+  await expect(page).toHaveURL(new RegExp(`/inbox/${handedOff!.id}`));
   await expect(thread(page).locator('[data-hand-off="done"]')).toContainText(
     "Handed off to a person",
   );

@@ -1,3 +1,5 @@
+import { readdirSync } from "node:fs";
+import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { MOCK_RUN_PATH } from "@/lib/eval/record";
 import { pickRunFile, readShownRun, runLabel } from "./run";
@@ -29,10 +31,11 @@ describe("pickRunFile", () => {
 });
 
 describe("readShownRun", () => {
-  it("reads the committed mock run, a finished run with a summary", () => {
+  // The committed run: the mock until rollout step 3 commits a real one, then that one.
+  it("reads the run pickRunFile picks, a finished run with a summary", () => {
     const { file, run } = readShownRun();
-    expect(file).toBe(MOCK_RUN_PATH);
-    expect(run.mock).toBe(true);
+    expect(file).toBe(pickRunFile(readdirSync(path.dirname(MOCK_RUN_PATH))));
+    expect(run.mock).toBe(file === MOCK_RUN_PATH);
     expect(run.aborted).toBe(false);
     expect(run.summary).not.toBeNull();
     expect(run.results).toHaveLength(24);
@@ -48,7 +51,7 @@ describe("runLabel", () => {
       model: run.model,
       commit: run.commit.sha.slice(0, 7),
       dirty: run.commit.dirty,
-      mock: true,
+      mock: run.mock,
     });
     expect(label.commit).toMatch(/^[0-9a-f]{7}$/);
   });
