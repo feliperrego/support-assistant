@@ -31,6 +31,9 @@ jobs:
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm test
+      # The mock eval (spec §5): the 24 frozen tickets through the chat's server pipeline with the
+      # mock model, no cost. It rewrites measurements/eval-mock.json, the inbox's stand-in.
+      - run: pnpm eval
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm build
       - run: pnpm e2e
