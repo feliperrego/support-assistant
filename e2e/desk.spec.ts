@@ -128,16 +128,24 @@ test("a hand-off shows its card, and the drawer keeps it across closing and the 
   await expect(drawer(page).locator('[data-hand-off="done"]')).toBeVisible();
 });
 
-test("the Evals page renders the headline with its CI, the matrix and a row per ticket", async ({
+test("the Evals page renders the headline (a real run's CI, or a mock statement), the matrix and a row per ticket", async ({
   page,
 }) => {
-  const { rate, tickets, level, low, high } = headlineNumbers(run.summary!);
+  const { rate, tickets, passed, level, low, high } = headlineNumbers(run.summary!);
   await page.goto("/evals");
   await waitForHydration(page);
-  await expect(page.getByTestId("headline")).toHaveText(
-    `${rate}% of ${tickets} frozen tickets handled correctly`,
-  );
-  await expect(page.getByTestId("interval")).toHaveText(`${level}% CI ${low}–${high}%`);
+  if (run.mock) {
+    // D9: a mock run shows no rate and no interval (lib/evals/headline.ts).
+    await expect(page.getByTestId("headline")).toHaveText(
+      `Mock run: ${passed} of ${tickets} mock answers passed the grader. No measurement yet.`,
+    );
+    await expect(page.getByTestId("interval")).toHaveCount(0);
+  } else {
+    await expect(page.getByTestId("headline")).toHaveText(
+      `${rate}% of ${tickets} frozen tickets handled correctly`,
+    );
+    await expect(page.getByTestId("interval")).toHaveText(`${level}% CI ${low}–${high}%`);
+  }
   await expect(page.getByTestId("matrix").locator("tbody tr")).toHaveCount(4);
   await expect(page.getByTestId("tickets").locator("tbody tr")).toHaveCount(run.results.length);
   await page.getByRole("link", { name: "Open the transcript of ticket t02" }).click();

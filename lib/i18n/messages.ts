@@ -139,6 +139,8 @@ export type ProjectMessages = {
   evals: {
     title: string;
     headline: string;
+    /** A mock run's headline: it measures nothing (D9). */
+    mockHeadline: string;
     interval: string;
     passed: string;
     about: string;
@@ -338,6 +340,7 @@ export const projectMessages: Record<Locale, ProjectMessages> = {
     evals: {
       title: "Evals",
       headline: "{rate}% of {tickets} frozen tickets handled correctly",
+      mockHeadline: "Mock run: {passed} of {tickets} mock answers passed the grader. No measurement yet.",
       interval: "{level}% CI {low}–{high}%",
       passed: "{passed} of {tickets} tickets passed",
       about:
@@ -535,6 +538,8 @@ export const projectMessages: Record<Locale, ProjectMessages> = {
     evals: {
       title: "Avaliações",
       headline: "{rate}% de {tickets} chamados congelados tratados corretamente",
+      mockHeadline:
+        "Rodada simulada: {passed} de {tickets} respostas simuladas passaram no avaliador. Ainda sem medição.",
       interval: "IC de {level}%: {low}–{high}%",
       passed: "{passed} de {tickets} chamados passaram",
       about:

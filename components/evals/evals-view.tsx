@@ -6,7 +6,6 @@ import type { ReactNode } from "react";
 import { useLocale } from "@/components/i18n/locale-provider";
 import { RunLabelView } from "@/components/inbox/run-label";
 import { OutcomeChip, VerdictBadge } from "@/components/support/outcome";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
@@ -17,6 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { evalsHeadline } from "@/lib/evals/headline";
 import type { EvalsData } from "@/lib/evals/view";
 import { formatDay, formatNumber, formatSeconds } from "@/lib/i18n/display";
 import { format } from "@/lib/i18n/format";
@@ -46,11 +46,12 @@ function Heading({ id, children }: { id: string; children: ReactNode }) {
  * The Evals page (spec §1 item 6, §5): the headline with its 95% CI, the supporting data, the
  * expected × actual outcome matrix, the per-ticket table linking to the transcripts in the inbox,
  * and the run's metadata. Measured numbers only, all from the run file (ROADMAP Q11); a mock run
- * is labelled as one.
+ * gets a statement instead of a rate (lib/evals/headline.ts).
  */
 export function EvalsView({ data }: { data: EvalsData }) {
   const { locale, t } = useLocale();
-  const { summary, headline, kinds, outcomes } = data;
+  const { summary, kinds, outcomes } = data;
+  const shown = evalsHeadline(data, t);
   const number = (value: number, digits = 0) => formatNumber(value, locale, digits);
   const seconds = (ms: number) => format(t.panel.seconds, { n: formatSeconds(ms, locale) });
 
@@ -62,24 +63,22 @@ export function EvalsView({ data }: { data: EvalsData }) {
       </div>
 
       <section aria-labelledby="headline" className="flex flex-col gap-2">
-        <p id="headline" data-testid="headline" className="text-3xl font-semibold tracking-tight">
-          {format(t.evals.headline, { rate: headline.rate, tickets: headline.tickets })}
-        </p>
-        <p className="flex flex-wrap items-center gap-2 text-lg text-muted-foreground">
-          <span data-testid="interval">
-            {format(t.evals.interval, {
-              level: headline.level,
-              low: headline.low,
-              high: headline.high,
-            })}
-          </span>
-          {data.run.mock && (
-            <Badge variant="outline" className="border-amber-500/60 text-amber-800">
-              {t.run.mock}
-            </Badge>
+        <p
+          id="headline"
+          data-testid="headline"
+          className={cn(
+            "font-semibold tracking-tight",
+            shown.interval === null ? "text-xl" : "text-3xl",
           )}
+        >
+          {shown.headline}
         </p>
-        <p>{format(t.evals.passed, { passed: headline.passed, tickets: headline.tickets })}</p>
+        {shown.interval !== null && (
+          <p data-testid="interval" className="text-lg text-muted-foreground">
+            {shown.interval}
+          </p>
+        )}
+        {shown.passed !== null && <p>{shown.passed}</p>}
         <p className="max-w-3xl text-sm text-muted-foreground">
           {t.evals.about} {t.evals.portuguese}
         </p>
