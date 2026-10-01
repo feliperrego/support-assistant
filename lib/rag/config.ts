@@ -5,7 +5,7 @@
  */
 
 /** The help center the index is built from (spec §3). */
-export { HELP_CENTER_DIR } from "@/lib/help-center/articles";
+export { HELP_CENTER_DIR } from "@/lib/help-center/dir";
 
 /** A ## section longer than this many whitespace-separated words is split at its ### (#2, S-25). */
 export const MAX_SECTION_WORDS = 1500;

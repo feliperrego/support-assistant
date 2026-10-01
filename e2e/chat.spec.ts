@@ -36,7 +36,13 @@ import {
   waitUntilIdle,
   type ChatRequestBody,
 } from "./helpers/chat";
-import { EMPTY_EN, FULL_DEFAULT_ANSWER, LIMIT_TEXT_EN, PROMPTS_EN } from "./helpers/fixtures";
+import {
+  CHAT_PATH,
+  EMPTY_EN,
+  FULL_DEFAULT_ANSWER,
+  LIMIT_TEXT_EN,
+  PROMPTS_EN,
+} from "./helpers/fixtures";
 import { header, MIN_TARGET_PX } from "./helpers/i18n";
 
 // E2E for the chat shell (X-01 design §6): the production build in mock mode (AI_MOCK=1), zero
@@ -61,7 +67,7 @@ function postedText(message: ChatRequestBody["messages"][number]): string {
 test("1. a suggested prompt streams in word by word, under the mock-model badge", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto(CHAT_PATH);
   // Every length the answer's text takes, from its first render to the end of the stream. The
   // observer sees each render, so the check does not depend on where a timed poll lands.
   await page.evaluate(() => {
@@ -117,7 +123,7 @@ test.describe("2. stop", () => {
   }
 
   test("the Stop button keeps the partial text, labeled Stopped", async ({ page }) => {
-    await page.goto("/");
+    await page.goto(CHAT_PATH);
     await sendText(page, SLOW_QUESTION);
     const bubble = assistantBubbles(page);
     await expect(bubble).toHaveCount(1);
@@ -126,7 +132,7 @@ test.describe("2. stop", () => {
   });
 
   test("Esc stops from anywhere on the page", async ({ page }) => {
-    await page.goto("/");
+    await page.goto(CHAT_PATH);
     await sendText(page, SLOW_QUESTION);
     const bubble = assistantBubbles(page);
     await expect(bubble).toHaveCount(1);
@@ -137,7 +143,7 @@ test.describe("2. stop", () => {
   });
 
   test("an Esc another handler already handled does not stop the answer", async ({ page }) => {
-    await page.goto("/");
+    await page.goto(CHAT_PATH);
     // Runs before the chat's listener and marks every Esc as handled, as a popover that closes
     // on Esc does.
     await page.evaluate(() => {
@@ -167,7 +173,7 @@ test.describe("2. stop", () => {
 test("3. Stop before the first token shows the stopped row; its Regenerate gives one answer", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto(CHAT_PATH);
   await composer(page).fill(QUESTION);
   const sentAt = Date.now();
   await sendButton(page).click();
@@ -190,7 +196,7 @@ test("3. Stop before the first token shows the stopped row; its Regenerate gives
 test("4. Regenerate posts the history without the old answer and shows one new answer", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto(CHAT_PATH);
   await sendText(page, QUESTION);
   await waitForAnswers(page);
   const bubble = assistantBubbles(page);
@@ -219,7 +225,7 @@ test("4. Regenerate posts the history without the old answer and shows one new a
 test("4. a second send posts the whole history: the question, its answer, then the new question", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto(CHAT_PATH);
   await sendText(page, QUESTION);
   await waitForAnswers(page);
 
@@ -257,14 +263,14 @@ test.describe("4. a follow-up after an answer longer than MAX_ASSISTANT_CHARS", 
   }
 
   test("a completed [[slow]] answer", async ({ page }) => {
-    await page.goto("/");
+    await page.goto(CHAT_PATH);
     await sendText(page, SLOW_QUESTION);
     await waitForAnswers(page);
     await expectFollowUpAnswered(page);
   });
 
   test("a [[slow]] answer stopped past MAX_ASSISTANT_CHARS", async ({ page }) => {
-    await page.goto("/");
+    await page.goto(CHAT_PATH);
     await sendText(page, SLOW_QUESTION);
     const bubble = assistantBubbles(page);
     await expect
@@ -276,7 +282,7 @@ test.describe("4. a follow-up after an answer longer than MAX_ASSISTANT_CHARS", 
   });
 
   test("an answer cut at the length limit past MAX_ASSISTANT_CHARS", async ({ page }) => {
-    await page.goto("/");
+    await page.goto(CHAT_PATH);
     const longAnswer = "A long answer that runs on. ".repeat(
       Math.ceil(MAX_ASSISTANT_CHARS / 28) + 10,
     );
@@ -297,7 +303,7 @@ test.describe("5. autoscroll", () => {
   test.use({ viewport: { width: 1280, height: 800 } });
 
   test("follows the stream, stops on wheel up, resumes with Jump to latest", async ({ page }) => {
-    await page.goto("/");
+    await page.goto(CHAT_PATH);
     await sendText(page, SLOW_QUESTION);
     // Wait until the answer overflows the view by a good margin.
     await expect
@@ -343,7 +349,7 @@ test.describe("5. autoscroll", () => {
   });
 
   test("PageUp outside the composer stops following; inside it, it does not", async ({ page }) => {
-    await page.goto("/");
+    await page.goto(CHAT_PATH);
     await sendText(page, SLOW_QUESTION);
     await expect
       .poll(async () => (await scrollState(page)).overflow, { timeout: 10_000 })
@@ -379,7 +385,7 @@ test.describe("5. autoscroll", () => {
   // action, so nothing else scrolls.
   for (const intent of ["PageUp", "wheel up", "touch move down"] as const) {
     test(`a scroll event queued before a stop by ${intent} does not undo it`, async ({ page }) => {
-      await page.goto("/");
+      await page.goto(CHAT_PATH);
       await sendText(page, SLOW_QUESTION);
       await expect
         .poll(async () => (await scrollState(page)).overflow, { timeout: 10_000 })
@@ -426,7 +432,7 @@ test.describe("5. autoscroll", () => {
   test("wheel up over a conversation that does not overflow never shows Jump to latest", async ({
     page,
   }) => {
-    await page.goto("/");
+    await page.goto(CHAT_PATH);
     await sendText(page, QUESTION);
     await waitForAnswers(page);
     expect((await scrollState(page)).overflow).toBeLessThanOrEqual(0);
@@ -447,7 +453,7 @@ test.describe("6. errors", () => {
   test("429 shows the translated limit text with no Retry; a later send succeeds", async ({
     page,
   }) => {
-    await page.goto("/");
+    await page.goto(CHAT_PATH);
     // The banner shows the client's errors.limit text, never the 429 body. In English that text
     // equals the server's, so the body here differs from it.
     const serverBody = "server limit text";
@@ -473,7 +479,7 @@ test.describe("6. errors", () => {
   });
 
   test("a 500 HTML page shows the generic banner and never renders the HTML", async ({ page }) => {
-    await page.goto("/");
+    await page.goto(CHAT_PATH);
     await page.route("**/api/chat", (route) =>
       route.fulfill({
         status: 500,
@@ -492,7 +498,7 @@ test.describe("6. errors", () => {
   test("a network reset shows the generic banner; Retry succeeds with no duplicated user bubble", async ({
     page,
   }) => {
-    await page.goto("/");
+    await page.goto(CHAT_PATH);
     await page.route("**/api/chat", (route) => route.abort("connectionreset"));
     await sendText(page, QUESTION);
     await expect(banner(page)).toContainText(GENERIC_ERROR_TEXT);
@@ -508,7 +514,7 @@ test.describe("6. errors", () => {
   test("[[error]] keeps the partial text under the generic banner; Retry streams the full answer", async ({
     page,
   }) => {
-    await page.goto("/");
+    await page.goto(CHAT_PATH);
     // The server fails each [[error]] prompt text only once per process, so make it unique.
     await sendText(page, `${QUESTION} ${ERROR_TRIGGER} ${randomUUID()}`);
     await expect(banner(page)).toContainText(GENERIC_ERROR_TEXT);
@@ -530,7 +536,7 @@ test.describe("6. errors", () => {
 
 test.describe("7. input and New chat", () => {
   test("whitespace-only input keeps Send disabled", async ({ page }) => {
-    await page.goto("/");
+    await page.goto(CHAT_PATH);
     await composer(page).fill("   \n\t  ");
     await expect(sendButton(page)).toBeDisabled();
     await composer(page).press("Enter");
@@ -538,13 +544,13 @@ test.describe("7. input and New chat", () => {
   });
 
   test(`input over ${MAX_USER_CHARS} characters is truncated`, async ({ page }) => {
-    await page.goto("/");
+    await page.goto(CHAT_PATH);
     await composer(page).fill("x".repeat(MAX_USER_CHARS + 100));
     expect((await composer(page).inputValue()).length).toBe(MAX_USER_CHARS);
   });
 
   test("pressing Enter twice within 50 ms sends exactly one request", async ({ page }) => {
-    await page.goto("/");
+    await page.goto(CHAT_PATH);
     let posts = 0;
     page.on("request", (request) => {
       if (isChatPost(request)) posts++;
@@ -593,7 +599,7 @@ test.describe("7. input and New chat", () => {
   });
 
   test("New chat clears the conversation and shows the empty state", async ({ page }) => {
-    await page.goto("/");
+    await page.goto(CHAT_PATH);
     await sendText(page, QUESTION);
     await waitForAnswers(page);
 
@@ -614,7 +620,7 @@ test.describe("7. input and New chat", () => {
   test("a double-click on Send sends once, and its second click does not stop the answer", async ({
     page,
   }) => {
-    await page.goto("/");
+    await page.goto(CHAT_PATH);
     let posts = 0;
     page.on("request", (request) => {
       if (isChatPost(request)) posts++;
@@ -644,7 +650,7 @@ test.describe("8. failure modes", () => {
   test("timeout before the first token (abort chunk, no finish): generic banner with Retry, no Stopped row; Retry recovers", async ({
     page,
   }) => {
-    await page.goto("/");
+    await page.goto(CHAT_PATH);
     // What the real route sends when streamText's firstChunkMs timeout fires: an `abort` chunk
     // with no preceding text and no `finish`.
     await page.route("**/api/chat", (route) =>
@@ -675,7 +681,7 @@ test.describe("8. failure modes", () => {
   });
 
   test("finishReason length shows 'Cut at demo length limit'", async ({ page }) => {
-    await page.goto("/");
+    await page.goto(CHAT_PATH);
     await page.route("**/api/chat", (route) =>
       fulfillSse(route, textAnswer("A long answer that the demo cuts short.", "length")),
     );
@@ -690,7 +696,7 @@ test.describe("8. failure modes", () => {
   test("New chat while streaming aborts the request, shows the empty state and no late bubble appears", async ({
     page,
   }) => {
-    await page.goto("/");
+    await page.goto(CHAT_PATH);
     let abortedRequests = 0;
     page.on("requestfailed", (request) => {
       if (isChatPost(request)) abortedRequests++;
@@ -721,7 +727,7 @@ test.describe("8. failure modes", () => {
   });
 
   test("New chat clears an error banner", async ({ page }) => {
-    await page.goto("/");
+    await page.goto(CHAT_PATH);
     await page.route("**/api/chat", (route) => route.abort("connectionreset"));
     await sendText(page, QUESTION);
     await expect(banner(page)).toContainText(GENERIC_ERROR_TEXT);
@@ -756,7 +762,7 @@ test.describe("8. failure modes", () => {
   test(`${MAX_MESSAGES} messages disable the composer with the cap placeholder; New chat re-enables it`, async ({
     page,
   }) => {
-    await page.goto("/");
+    await page.goto(CHAT_PATH);
     const postedSizes = await fillToTheCap(page);
     // Each request carries the whole history, and none carries more than the cap.
     const roundTrips = Math.ceil(MAX_MESSAGES / 2);
@@ -784,7 +790,7 @@ test.describe("8. failure modes", () => {
   test("at the cap, New chat from the keyboard puts the focus in the composer", async ({
     page,
   }) => {
-    await page.goto("/");
+    await page.goto(CHAT_PATH);
     await fillToTheCap(page);
 
     // Keyboard only: back through the page to New chat, then Enter.
@@ -817,7 +823,7 @@ test.describe("8. failure modes", () => {
     test("touch: no autofocus, no refocus after Stop, 44 px targets, no horizontal scroll", async ({
       page,
     }) => {
-      await page.goto("/");
+      await page.goto(CHAT_PATH);
       const isCoarsePointer = await page.evaluate(
         () => window.matchMedia("(pointer: coarse)").matches,
       );
@@ -868,7 +874,7 @@ test.describe("8. failure modes", () => {
     test("touch: a rotation or a smaller view keeps a followed answer at the bottom", async ({
       page,
     }) => {
-      await page.goto("/");
+      await page.goto(CHAT_PATH);
       await composer(page).tap();
       await composer(page).fill(SLOW_QUESTION);
       await sendButton(page).tap();
@@ -914,7 +920,7 @@ test.describe("8. failure modes", () => {
     // no timing: on a followed view that overflows, the scroll container's computed
     // overflow-anchor is "none".
     test("touch: a rotation never moves a followed view up", async ({ page }) => {
-      await page.goto("/");
+      await page.goto(CHAT_PATH);
       await composer(page).tap();
       await composer(page).fill(
         `Explain, in one short paragraph, what streaming means for a chat interface. ${SLOW_TRIGGER}`,
@@ -956,7 +962,7 @@ test.describe("8. failure modes", () => {
     });
 
     test("touch: Jump to latest, Retry and the footer links are 44 px tall", async ({ page }) => {
-      await page.goto("/");
+      await page.goto(CHAT_PATH);
       for (const name of ["Felipe Rêgo", "Source on GitHub"]) {
         const box = await page.getByRole("link", { name, exact: true }).boundingBox();
         expect(box?.height, `height of "${name}"`).toBeGreaterThanOrEqual(MIN_TARGET_PX);

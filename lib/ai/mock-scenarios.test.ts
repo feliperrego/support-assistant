@@ -93,11 +93,25 @@ describe("scenarioOf", () => {
     "Is it possible to change the shipping address on an order after I've placed it?",
     "How long do refunds take?",
     "How long is the warranty?",
-    ...messages.en.prompts,
-    ...messages["pt-BR"].prompts,
   ])("answers %j from the help center", (text) => {
     expect(scenarioOf(text)).toBe("cited-answer");
   });
+
+  // The drawer's suggested prompts lead to the four outcomes, in order, in both interface
+  // languages, so Preview's mock shows each one (spec §1, item 4).
+  it.each(["en", "pt-BR"] as const)(
+    "leads the %s suggested prompts to the four outcomes",
+    (locale) => {
+      const { prompts } = messages[locale];
+      expect(prompts.map(scenarioOf)).toEqual([
+        "cited-answer",
+        "order-lookup",
+        "hand-off",
+        "refusal",
+      ]);
+      expect(handOffReasonOf(prompts[2])).toBe("refund");
+    },
+  );
 });
 
 describe("mockStep: the first step", () => {

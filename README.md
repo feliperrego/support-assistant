@@ -15,7 +15,7 @@ Pending: the first eval run prints this line, with the 95% CI, the model, the da
 The share of 24 frozen English tickets (8 policy questions, 6 order questions, 5 hand-offs, 5 refusals) handled correctly, scored by a script on the server that runs the chat's pipeline once with the real model: `pnpm eval` (`AI_MOCK=1 pnpm eval` runs it free with the mock model, as CI does). The outcome matrix, the citation-verified rate, and cost and latency per ticket are supporting data. Caveat: Portuguese answers are checked by hand, not measured.
 
 ## Run it
-`pnpm install && pnpm dev:mock` (no API key needed)
+`pnpm install && pnpm dev:mock` (no API key needed), then open http://localhost:3000: the inbox, the Help Center, the Evals page, and "Try as a customer" in the header (also a full page at `/try`).
 
 ## Stack
 Next.js · AI SDK · AI Gateway · shadcn/ui · Upstash · Playwright

@@ -14,6 +14,7 @@ import {
   userBubbles,
 } from "./helpers/chat";
 import {
+  CHAT_PATH,
   EMPTY_EN,
   EMPTY_PT,
   LIMIT_TEXT_EN,
@@ -129,13 +130,13 @@ async function expectNewChatOpensAtTitle(page: Page, strings: UiStrings): Promis
 test("1. / shows the English empty state: title, subtitle, the prompts and the rate note", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto(CHAT_PATH);
   await waitForHydration(page);
   await expectEmptyState(page, UI_EN);
 });
 
 test("2. PT translates the empty state, New chat and the placeholder", async ({ page }) => {
-  await page.goto("/");
+  await page.goto(CHAT_PATH);
   await waitForHydration(page);
   await switchButton(page, "PT").click();
   await expectPortuguese(page);
@@ -148,7 +149,7 @@ test("2. PT translates the empty state, New chat and the placeholder", async ({ 
 test("2. PT sweep: no English interface string on the empty state, after a Stop or under the error banner", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto(CHAT_PATH);
   await waitForHydration(page);
   // Control: in English the sweep finds the dictionary's text, placeholders and aria-labels.
   await expect
@@ -196,7 +197,7 @@ test("2. PT sweep: no English interface string on the empty state, after a Stop 
 test("5. removing lang keeps the page: no reload, no router request; Back then Forward reopens / in English", async ({
   page,
 }) => {
-  await page.goto("/?lang=pt-BR");
+  await page.goto(`${CHAT_PATH}?lang=pt-BR`);
   await expectPortuguese(page);
   await composer(page).fill(PROMPTS_EN[0]);
   await composer(page).press("Enter");
@@ -212,7 +213,7 @@ test("5. removing lang keeps the page: no reload, no router request; Back then F
 
   await switchButton(page, "EN").click();
   await expectEnglish(page);
-  await expect(page).toHaveURL("/");
+  await expect(page).toHaveURL(CHAT_PATH);
   await expect(userBubbles(page)).toHaveText([PROMPTS_EN[0]]);
   await expect(answerText(assistantBubbles(page))).toHaveText(answer);
 
@@ -225,7 +226,7 @@ test("5. removing lang keeps the page: no reload, no router request; Back then F
   expect(await page.evaluate(() => "e2eSameDocument" in window)).toBe(true);
   // Neither a document request for / nor a Next.js router (RSC) request.
   const pageRequests = requests.filter(
-    (url) => url.pathname === "/" || url.searchParams.has("_rsc"),
+    (url) => url.pathname === CHAT_PATH || url.searchParams.has("_rsc"),
   );
   expect(pageRequests.map(String)).toEqual([]);
 
@@ -233,7 +234,7 @@ test("5. removing lang keeps the page: no reload, no router request; Back then F
   // document: English, the stored choice, since the history entry no longer holds lang.
   await page.goBack();
   await page.goForward();
-  await expect(page).toHaveURL("/");
+  await expect(page).toHaveURL(CHAT_PATH);
   await waitForHydration(page);
   await expectEnglish(page);
 });
@@ -241,7 +242,7 @@ test("5. removing lang keeps the page: no reload, no router request; Back then F
 test("7. a 429 in Portuguese shows the pt-BR limit text, not the English body", async ({
   page,
 }) => {
-  await page.goto("/?lang=pt-BR");
+  await page.goto(`${CHAT_PATH}?lang=pt-BR`);
   await expectPortuguese(page);
   await page.route("**/api/chat", (route) =>
     route.fulfill({
@@ -260,7 +261,7 @@ test("7. a 429 in Portuguese shows the pt-BR limit text, not the English body", 
 test("the limit banner follows the switch: pt-BR after PT, English again after EN, never Retry", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto(CHAT_PATH);
   await waitForHydration(page);
   // In English the client's text equals the server's, so the body here differs from it.
   const serverBody = "server limit text";
@@ -291,7 +292,7 @@ test("the limit banner follows the switch: pt-BR after PT, English again after E
 test("8. a suggested prompt posts its exact text and the locale: en, then pt-BR after PT; Regenerate sends pt-BR too", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto(CHAT_PATH);
   await waitForHydration(page);
   // English first: a locale fixed at load, rather than read for each request, fails below.
   const english = await postedBody(page, () => promptButton(page, PROMPTS_EN[0]).click());
@@ -323,7 +324,7 @@ test("8. a suggested prompt posts its exact text and the locale: en, then pt-BR 
 test("PT while an answer streams renames Stop; the stopped request sent en, its Regenerate sends pt-BR", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto(CHAT_PATH);
   await waitForHydration(page);
   const english = await postedBody(page, async () => {
     await composer(page).fill(SLOW_QUESTION);
@@ -354,7 +355,7 @@ test.describe("9. a phone at 375×812 with touch", () => {
   test("9. 44 px targets, no sideways scroll and New chat back at the title, in English and after tapping PT", async ({
     page,
   }) => {
-    await page.goto("/");
+    await page.goto(CHAT_PATH);
     const isCoarsePointer = await page.evaluate(
       () => window.matchMedia("(pointer: coarse)").matches,
     );

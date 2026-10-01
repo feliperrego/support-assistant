@@ -1,12 +1,13 @@
 import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
+import { HELP_CENTER_DIR } from "./dir";
 
 /**
  * The help center of spec §3: about 15 English Markdown articles written for the demo, one file
  * per article, split into "##" sections so #2's chunker applies (spec §4). Relative to the repo
  * root. Server-only: it reads the files from disk.
  */
-export const HELP_CENTER_DIR = "content/help-center";
+export { HELP_CENTER_DIR };
 
 const ARTICLE_EXTENSION = ".md";
 

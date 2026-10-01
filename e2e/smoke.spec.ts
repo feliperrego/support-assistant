@@ -5,7 +5,9 @@ test("page shows the mock model and the footer", async ({ page }) => {
   const header = page.locator("header[data-model]");
   await expect(header).toHaveAttribute("data-model", "mock");
   await expect(header).toHaveAttribute("data-mock", "");
-  await expect(page.getByText("Mock model")).toBeVisible();
+  // Scoped to the header, as the other specs do: P1's "/" is the inbox, whose recorded mock
+  // answers also say "mock model" (P1 spec §1, item 1).
+  await expect(header.getByText("Mock model", { exact: true })).toBeVisible();
   await expect(page.getByRole("link", { name: "Felipe Rêgo" })).toHaveAttribute(
     "href",
     "https://feliperrego.com",

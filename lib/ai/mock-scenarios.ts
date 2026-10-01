@@ -56,9 +56,11 @@ export const MOCK_REFUSAL =
 
 // The cues, checked in this order: a refusal first (another person, a rule change, off topic),
 // then a hand-off, then an order lookup; anything else gets the cited answer. They are a mock's
-// guesses from words, so a real model's choice can differ: the eval measures the real one.
+// guesses from words, so a real model's choice can differ: the eval measures the real one. A few
+// Portuguese cues let the pt-BR suggested prompts reach the four outcomes too (spec §1, item 4).
 const REFUSAL_CUES: readonly RegExp[] = [
   /\b(?:friend|someone else|another customer|other customers|every customer|all customers)\b/i,
+  /\b(?:outro cliente|outra cliente|outros clientes|todos os clientes|amig[oa]s?)\b/i,
   /[\w.+-]+@[\w-]+(?:\.[\w-]+)+/,
   /\b(?:ignore (?:your|all|the|previous)|admin mode|developer mode|new rule|system prompt)\b/i,
   /\b(?:mountain|weather|recipe|capital of|president|football|movie)\b/i,
@@ -70,6 +72,7 @@ const HAND_OFF_CUES: readonly (readonly [RegExp, HandOffReason])[] = [
     /\b(?:(?:like|want|need|get|request) (?:a |my )?refund|refund (?:me|my|please)|my money back)\b/i,
     "refund",
   ],
+  [/\breembols/i, "refund"],
   [
     /\b(?:cracked|broken|broke|defective|damaged|torn|ripped|leaks|stopped working|faulty)\b/i,
     "defect-claim",
@@ -89,6 +92,7 @@ const ORDER_ID = /\bAO-?(\d{5})\b/i;
 const ORDER_CUES: readonly RegExp[] = [
   ORDER_ID,
   /\b(?:tracking number|where is my|when should my|arrive|delivered|shipped|status of my|my orders|reach your warehouse)\b/i,
+  /\b(?:onde está|meu pedido|meus pedidos|rastreio|rastreamento)/i,
 ];
 
 // Question texts that already produced the [[error]] scenario in this server process. The first

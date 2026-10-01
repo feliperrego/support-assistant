@@ -73,6 +73,28 @@ export function summarizeResults(results: readonly TicketResult[]): EvalSummary 
   };
 }
 
+/** The headline's numbers as whole percents (#2's wholePercent): README line 1 and the Evals page. */
+export type HeadlineNumbers = {
+  rate: number;
+  low: number;
+  high: number;
+  /** The interval's confidence level, 95. */
+  level: number;
+  passed: number;
+  tickets: number;
+};
+
+export function headlineNumbers({ rate, interval, passed, tickets }: EvalSummary): HeadlineNumbers {
+  return {
+    rate: wholePercent(rate),
+    low: wholePercent(interval.low),
+    high: wholePercent(interval.high),
+    level: wholePercent(interval.level),
+    passed,
+    tickets,
+  };
+}
+
 export type ReadmeLines = { title: string; howMeasured: string };
 
 /** README line 1 and the first line of "How it's measured", for a run that was not aborted. */
@@ -81,11 +103,11 @@ export function readmeLines(run: EvalRun, rawData: string): ReadmeLines {
   if (run.aborted || summary === null) {
     throw new Error("An aborted run prints no README lines (template spec §7.5).");
   }
-  const { interval, byKind } = summary;
+  const { byKind } = summary;
+  const { rate, low, high, level, tickets } = headlineNumbers(summary);
   const title =
-    `# ${PRODUCT_NAME} — ${wholePercent(summary.rate)}% of ${summary.tickets} frozen tickets ` +
-    `handled correctly (${wholePercent(interval.level)}% CI ${wholePercent(interval.low)}–` +
-    `${wholePercent(interval.high)}%)`;
+    `# ${PRODUCT_NAME} — ${rate}% of ${tickets} frozen tickets handled correctly ` +
+    `(${level}% CI ${low}–${high}%)`;
 
   const kinds = KINDS.map((kind) => `${byKind[kind].tickets} ${kind}`).join(", ");
   const handled = KINDS.map(

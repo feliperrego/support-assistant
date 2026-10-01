@@ -3,7 +3,7 @@
 import { useChat } from "@ai-sdk/react";
 import type { ChatTransport, UIMessage } from "ai";
 import { ArrowDown, Plus } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useRef, useState } from "react";
 import { Composer } from "@/components/chat/composer";
 import { EmptyState, type EmptyStateContent } from "@/components/chat/empty-state";
 import {
@@ -54,6 +54,13 @@ export type ChatProps<M extends UIMessage> = {
    * filter, the Regenerate slot, the typing dots and the status line all read it.
    */
   hasContent?: (message: M) => boolean;
+  /**
+   * What sits above the conversation, given the New chat button. Default: the site header with
+   * New chat in its actions. Added in P1, whose chat also lives in a drawer with its own bar
+   * (P1 spec §1 item 4; template spec §5.8, deferred seams: a project that needs one edits its
+   * copy of the shell).
+   */
+  header?: (newChat: ReactNode) => ReactNode;
 };
 
 /**
@@ -81,6 +88,7 @@ export function Chat<M extends UIMessage = UIMessage>({
   maxMessages = MAX_MESSAGES,
   renderAssistant = renderPlainText,
   hasContent = hasVisibleText,
+  header,
 }: ChatProps<M>) {
   const { locale, t } = useLocale();
   const [annotations, setAnnotations] = useState<ReadonlyMap<string, MessageAnnotation>>(
@@ -193,24 +201,30 @@ export function Chat<M extends UIMessage = UIMessage>({
     hasContent,
   );
 
+  const newChatButton = (
+    <Button
+      variant="outline"
+      className="pointer-coarse:h-11 max-sm:aspect-square max-sm:px-0"
+      onClick={() => void newChat()}
+    >
+      <Plus />
+      {/* Icon only below sm, so the header fits at 375 px; the accessible name stays. */}
+      <span className="max-sm:sr-only">{t.header.newChat}</span>
+    </Button>
+  );
+
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <SiteHeader
-        modelLabel={modelLabel}
-        isMock={isMock}
-        commit={commit}
-        actions={
-          <Button
-            variant="outline"
-            className="pointer-coarse:h-11 max-sm:aspect-square max-sm:px-0"
-            onClick={() => void newChat()}
-          >
-            <Plus />
-            {/* Icon only below sm, so the header fits at 375 px; the accessible name stays. */}
-            <span className="max-sm:sr-only">{t.header.newChat}</span>
-          </Button>
-        }
-      />
+      {header === undefined ? (
+        <SiteHeader
+          modelLabel={modelLabel}
+          isMock={isMock}
+          commit={commit}
+          actions={newChatButton}
+        />
+      ) : (
+        header(newChatButton)
+      )}
 
       <main className="relative min-h-0 flex-1">
         <div ref={scrollContainerRef} className="h-full overflow-y-auto overscroll-contain">

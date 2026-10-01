@@ -1,4 +1,5 @@
-import { type Customer, storeData } from "@/lib/store/customers";
+import { type Customer, type OrderStatus, storeData } from "@/lib/store/customers";
+import { parseStoreDate } from "@/lib/store/dates";
 
 /**
  * The persona a conversation is held as (spec §1, item 4; spec §4). The client sends its id in
@@ -20,4 +21,26 @@ export function requestPersona(body: unknown): Customer | null {
   const { persona } = body as { persona?: unknown };
   if (typeof persona !== "string") return null;
   return storeData.customers.find(({ id }) => id === persona) ?? null;
+}
+
+/**
+ * One customer in the persona picker (spec §1 item 4, P-05): the name, and the order ids and
+ * statuses a visitor can ask about, newest first. Nothing else of the customer reaches the page.
+ */
+export type PersonaOption = {
+  id: string;
+  name: string;
+  orders: { id: string; status: OrderStatus }[];
+};
+
+export function personaOptions(
+  customers: readonly Customer[] = storeData.customers,
+): PersonaOption[] {
+  return customers.map(({ id, name, orders }) => ({
+    id,
+    name,
+    orders: [...orders]
+      .sort((a, b) => parseStoreDate(b.placedOn).getTime() - parseStoreDate(a.placedOn).getTime())
+      .map(({ id: orderId, status }) => ({ id: orderId, status })),
+  }));
 }
