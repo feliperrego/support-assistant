@@ -79,7 +79,7 @@ Size: 2–3 agent days [P: estimate].
 
 | Session | Start | End | Notes |
 |---|---|---|---|
-| 1 | 2026-10-01 10:11 -03 | 2026-10-01 15:40 -03 | design; build; decisions D1–D16. Start and end are Felipe's first and last message of the session; the agent's work after his last message is not his time |
+| 1 | 2026-10-01 10:11 -03 | 2026-10-01 16:17 -03 | design; build; decisions D1–D16 and N1–N5. Start and end are Felipe's first and last message of the session; the agent's work after his last message is not his time |
 
 ## 9. Out of scope, with triggers
 
