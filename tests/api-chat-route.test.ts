@@ -624,7 +624,8 @@ describe("POST /api/chat — retrieval (spec §4)", () => {
     });
   });
 
-  it("carries the retrieval in the metadata first, and the answer's tokens on the finish chunk", async () => {
+  // The live answer's Analysis (spec §1, item 3) reads tokens and latency from the finish chunk.
+  it("carries the retrieval in the metadata first, and the answer's tokens and latency on the finish chunk", async () => {
     h.model = fastModel(["one ", "two"]);
 
     const sse = parseSse(await (await POST(chatRequest([user("Hi")]))).text());
@@ -639,8 +640,11 @@ describe("POST /api/chat — retrieval (spec §4)", () => {
       messageMetadata: {
         retrieval: { topScore: expect.any(Number), searchMs: expect.any(Number) },
         usage: { inputTokens: 0, outputTokens: 2, totalTokens: 2 },
+        latencyMs: expect.any(Number),
       },
     });
+    const { latencyMs } = finish?.messageMetadata as { latencyMs: number };
+    expect(Number.isInteger(latencyMs) && latencyMs >= 0).toBe(true);
   });
 });
 

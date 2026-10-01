@@ -26,17 +26,18 @@ export type AppChatProps = {
   leading?: ReactNode;
 };
 
+// Each finished live answer carries its collapsed Analysis (spec §1, item 3).
 const renderAnswer: AssistantRenderer<SupportUIMessage> = (message, { streaming, caption }) => (
-  <AssistantMessage message={message} streaming={streaming} caption={caption} />
+  <AssistantMessage message={message} streaming={streaming} caption={caption} analysis />
 );
 
 /**
  * The project's chat (X-01 design §4.2, §4.3), project-owned: "Try as a customer" (spec §1,
  * item 4). The visitor picks a persona; P1's transport adds it to every request body, where the
  * route validates it (spec §4). It still posts the whole history, so the message cap stays on.
- * Answers render with #2's citations, the tool chips and the hand-off card. Changing the persona
- * remounts the chat, so a conversation never mixes two customers. The conversation lives in the
- * browser only, in memory (ROADMAP Q8).
+ * Answers render with #2's citations, the tool chips, the hand-off card and the Analysis.
+ * Changing the persona remounts the chat, so a conversation never mixes two customers. The
+ * conversation lives in the browser only, in memory (ROADMAP Q8).
  */
 export function AppChat({
   modelLabel,

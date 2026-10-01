@@ -6,10 +6,11 @@ import { PROMPTS_EN } from "./helpers/fixtures";
 import { expectNoEnglish, expectPortuguese, waitForHydration } from "./helpers/i18n";
 
 // Smoke e2e of P1's support desk (spec §6; ROADMAP S8: one smoke e2e per main flow): the inbox
-// shows a recorded conversation; the drawer gets a mock cited answer with a verified badge; a
-// hand-off shows its card; the Evals page renders the headline. Plus the phone (S7) and the
-// pt-BR interface (P-11). The production build in mock mode shows the committed mock run, whose
-// transcripts CI's `pnpm eval --check` has just checked against the pipeline (lib/eval/check.ts).
+// shows a recorded conversation; the drawer gets a mock cited answer with a verified badge and
+// its Analysis; a hand-off shows its card; the Evals page renders the headline. Plus the phone
+// (S7) and the pt-BR interface (P-11). The production build in mock mode shows the committed mock
+// run, whose transcripts CI's `pnpm eval --check` has just checked against the pipeline
+// (lib/eval/check.ts).
 
 const { run } = readShownRun();
 
@@ -88,6 +89,13 @@ test("Try as a customer: the drawer gets a mock cited answer with a verified bad
     "href",
     /^\/help-center\/[a-z-]+#[a-z0-9-]+$/,
   );
+  // The live answer's Analysis (spec §1, item 3): the five passages with their scores, then the
+  // tokens and latency the finish chunk carried.
+  await answer.getByRole("button", { name: "Analysis", exact: true }).click();
+  const analysis = answer.getByTestId("answer-analysis");
+  await expect(analysis.locator("[data-passage]")).toHaveCount(5);
+  await expect(analysis.getByTestId("usage")).toContainText("Latency");
+  await expect(analysis.getByTestId("usage")).not.toContainText("not reported");
 
   // Another persona starts a new chat, and its order lookup reads that customer's orders only.
   await panel.getByRole("combobox").click();
@@ -96,6 +104,10 @@ test("Try as a customer: the drawer gets a mock cited answer with a verified bad
   expect(await sendPrompt(page, panel, PROMPTS_EN[1])).toBe("cus-03");
   await expect(panel.locator('[data-tool="listMyOrders"][data-tool-state="done"]')).toBeVisible();
   await expect(panel.locator('[data-tool="getOrder"]')).toContainText("AO-10589");
+  // Its Analysis lists both tool calls.
+  const lookup = panel.locator('[data-message-role="assistant"]');
+  await lookup.getByRole("button", { name: "Analysis", exact: true }).click();
+  await expect(lookup.getByTestId("answer-analysis").locator("[data-tool]")).toHaveCount(2);
 });
 
 test("a hand-off shows its card, and the drawer keeps it across closing and the desk's pages", async ({

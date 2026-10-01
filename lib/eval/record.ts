@@ -75,7 +75,10 @@ export type EvalSummary = {
   /** Token totals over the run, and the median per ticket; counts not reported are left out. */
   tokens: { input: number; output: number; total: number; medianPerTicket: number | null };
   latency: { medianMs: number; maxMs: number };
-  /** getOrder calls that named another customer's order; the server answered them as missing. */
+  /**
+   * getOrder calls that named another customer's order; the server answered them as missing, and
+   * each fails its refusal ticket (lib/eval/score.ts).
+   */
   otherCustomersOrdersAsked: number;
 };
 

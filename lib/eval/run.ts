@@ -2,9 +2,10 @@ import { type LanguageModel, readUIMessageStream, type UIMessage, type UIMessage
 import { validateAndClean } from "@/lib/chat/validate";
 import type { Retriever } from "@/lib/rag/retrieve";
 import { type Customer, storeData } from "@/lib/store/customers";
+import { tokenUsageOf } from "@/lib/support/analysis";
 import type { SupportUIMessage } from "@/lib/support/message";
 import { streamSupportReply } from "@/lib/support/pipeline";
-import type { TicketResult, TokenUsage } from "./record";
+import type { TicketResult } from "./record";
 import { scoreTicket } from "./score";
 import type { Ticket } from "./tickets";
 import { toTranscript } from "./transcript";
@@ -49,13 +50,6 @@ async function finishedMessage(chunks: readonly UIMessageChunk[]): Promise<Suppo
     message = snapshot;
   if (message === undefined) throw new Error("The answer's stream held no message.");
   return message;
-}
-
-function tokenUsage(message: SupportUIMessage): TokenUsage | null {
-  const usage = message.metadata?.usage;
-  if (usage === undefined) return null;
-  const { inputTokens = null, outputTokens = null, totalTokens = null } = usage;
-  return { inputTokens, outputTokens, totalTokens };
 }
 
 export async function runTicket({
@@ -112,7 +106,7 @@ export async function runTicket({
       ...transcript,
       messages: [user as SupportUIMessage, answer],
       finishReason: finish.finishReason ?? null,
-      usage: tokenUsage(answer),
+      usage: tokenUsageOf(answer),
       latencyMs,
     },
   };

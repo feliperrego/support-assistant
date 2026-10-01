@@ -1,7 +1,7 @@
-import type { EvalRun, TicketResult, TokenUsage } from "@/lib/eval/record";
+import type { EvalRun, TicketResult } from "@/lib/eval/record";
 import type { Outcome, TicketKind } from "@/lib/eval/tickets";
-import type { ToolCallRecord } from "@/lib/eval/transcript";
 import { messageSources } from "@/lib/rag/message";
+import { type AnswerAnalysis, passageRows } from "@/lib/support/analysis";
 import { type Customer, type Order } from "@/lib/store/customers";
 import { parseStoreDate } from "@/lib/store/dates";
 import { type RunLabel, runLabel } from "./run";
@@ -60,43 +60,16 @@ export function customerCard({ id, name, email, orders }: Customer): CustomerCar
   };
 }
 
-/** One retrieved passage in the Analysis tab, in rank order. */
-export type PassageRow = {
-  number: number;
-  heading: string;
-  url: string;
-  /** Cosine similarity to the message. */
-  score: number;
-  /** The answer cites this passage at least once. */
-  cited: boolean;
-};
+export type { AnswerAnalysis, PassageRow } from "@/lib/support/analysis";
 
-/** The Analysis tab of one answer (spec §1, item 3). */
-export type AnswerAnalysis = {
-  passages: PassageRow[];
-  /** The best passage's score and the in-memory search time, from the answer's metadata. */
-  retrieval: { topScore: number; searchMs: number } | null;
-  toolCalls: ToolCallRecord[];
-  usage: TokenUsage | null;
-  latencyMs: number | null;
-};
-
+/**
+ * The Analysis tab of one recorded answer (spec §1, item 3), from what the eval recorded: its
+ * citations, tool calls, tokens and latency. A live answer gets the same from liveAnalysisOf.
+ */
 export function analysisOf(result: TicketResult): AnswerAnalysis {
   const answer = result.messages.find((message) => message.role === "assistant");
-  const cited = new Set(
-    result.citations.flatMap((citation) => (citation.type === "citation" ? [citation.n] : [])),
-  );
-  const passages = (answer === undefined ? [] : messageSources(answer)).map(
-    ({ number, heading, url, score }) => ({
-      number,
-      heading,
-      url,
-      score,
-      cited: cited.has(number),
-    }),
-  );
   return {
-    passages,
+    passages: passageRows(answer === undefined ? [] : messageSources(answer), result.citations),
     retrieval: answer?.metadata?.retrieval ?? null,
     toolCalls: result.toolCalls,
     usage: result.usage,

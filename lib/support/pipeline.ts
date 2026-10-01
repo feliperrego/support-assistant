@@ -26,7 +26,7 @@ import { supportTools, supportToolsContext } from "./tools";
  * 2. send the retrieval as metadata and the passages as a data-sources part, before the answer;
  * 3. stream the model with the instructions, the cleaned text-only history (P-07), the three
  *    tools scoped to the persona through their context, and multi-step calls up to MAX_STEPS;
- * 4. send the tokens of every step with the finish chunk.
+ * 4. send the tokens of every step and the answer's server time with the finish chunk.
  * The messages must already be validated and cleaned (lib/chat/validate.ts).
  */
 export type SupportReplyOptions = {
@@ -57,6 +57,7 @@ export function streamSupportReply({
     // toUIMessageStream below. Either way the raw error is logged once, on the server.
     onError: toSafeErrorMessage,
     execute: async ({ writer }) => {
+      const started = performance.now();
       writer.write({ type: "start" });
 
       const { results, topScore, searchMs } = await retriever.retrieve(latestUserText(messages), {
@@ -93,8 +94,15 @@ export function streamSupportReply({
           sendStart: false,
           sendReasoning: false,
           onError: toSafeErrorMessage,
+          // The live answer's Analysis reads the tokens and latency from here (spec §1, item 3).
           messageMetadata: ({ part }) =>
-            part.type === "finish" ? { retrieval, usage: answerUsage(part.totalUsage) } : undefined,
+            part.type === "finish"
+              ? {
+                  retrieval,
+                  usage: answerUsage(part.totalUsage),
+                  latencyMs: Math.round(performance.now() - started),
+                }
+              : undefined,
         }),
       );
     },

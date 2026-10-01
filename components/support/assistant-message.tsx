@@ -2,6 +2,7 @@ import { Fragment, type ReactNode, useMemo } from "react";
 import { Citation } from "@/components/rag/citation";
 import { InlineCode } from "@/components/rag/inline-code";
 import { SourcesList } from "@/components/rag/sources-list";
+import { LiveAnalysis } from "@/components/support/answer-analysis";
 import { HandOffCard } from "@/components/support/hand-off-card";
 import { ToolCall } from "@/components/support/tool-call";
 import { hasVisibleText } from "@/lib/chat/ui";
@@ -31,20 +32,27 @@ type AssistantMessageProps = {
   caption?: ReactNode;
   /** The language of the model's words when it is known: "en" for a recorded eval ticket. */
   contentLang?: string;
+  /**
+   * Show the answer's Analysis, collapsed, once it has finished: the live chat's (spec §1, item
+   * 3). The inbox shows it in the right panel instead.
+   */
+  analysis?: boolean;
 };
 
 /**
  * One answer (spec §1, item 2), in the live chat and in the inbox: the text with #2's [n]
  * popovers and verified/not-found badges, then a chip for each order lookup with its input and
- * output, the hand-off card, #2's Sources list and the caption. It keeps the shell's renderer
- * contract (template spec §5.8): data-message-role="assistant" on the root, the answer text as its
- * first child div, the caption last.
+ * output, the hand-off card, #2's Sources list, the live answer's collapsed Analysis (spec §1,
+ * item 3) and the caption. It keeps the shell's renderer contract (template spec §5.8):
+ * data-message-role="assistant" on the root, the answer text as its first child div, the caption
+ * last.
  */
 export function AssistantMessage({
   message,
   streaming,
   caption = null,
   contentLang,
+  analysis = false,
 }: AssistantMessageProps) {
   const text = answerText(message);
   const sources = messageSources(message);
@@ -82,6 +90,7 @@ export function AssistantMessage({
         <HandOffCard key={view.id} view={view} contentLang={contentLang} />
       ))}
       {cited.length > 0 && <SourcesList cited={cited} />}
+      {analysis && !streaming && <LiveAnalysis message={message} />}
       {caption}
     </div>
   );
