@@ -1,0 +1,2 @@
+# The frozen tickets stay byte for byte: tests/tickets.test.ts checks their recorded SHA-256 (spec §5, P-04).
+measurements/tickets.json
