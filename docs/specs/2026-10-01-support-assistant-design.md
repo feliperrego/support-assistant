@@ -1,6 +1,6 @@
 # P1: Support assistant with RAG — design
 
-- **Status:** draft for Felipe's approval (2026-10-01). Nothing is built yet.
+- **Status:** approved by Felipe on 2026-10-01 ("todas ok, nome Acme Outfitters"): P-01..P-12 of §10, with P-01 option (c). The `[P]` tags stay as a record; later documents cite these items as `[D: P-nn]`.
 - **What it carries out:** P1 of `portfolio/ROADMAP.md`, rewritten on 2026-10-01 [D: Q1–Q12, S1–S10, 2026-10-01; S6 rejected]. Light process [D: S1]: this short spec, then build, with one review at the end.
 - **Starts from:** the template at `27e6957` (chat shell, EN/pt-BR, mock mode, rate limit) [F], and copies #2's retrieval, citations and verifier [D: Q6].
 
@@ -29,7 +29,7 @@ A support desk for one fictional store, in the style of the Quickchat reference:
 
 ## 3. The fictional store [P — Felipe's domain]
 
-One store for P1, P2 and P4 [D: Q4], an online **outdoor-gear shop**: tents, backpacks, jackets, boots. Prices in US dollars. The name is §10's P-01, checked against real companies before use. About 15 help articles, each written for the demo, with policies Felipe approves (P-03):
+One store for P1, P2 and P4 [D: Q4], an online **outdoor-gear shop**: tents, backpacks, jackets, boots. Prices in US dollars. Its name is **Acme Outfitters** [D: P-01 (c)]. Checked on 2026-10-01: no well-known outdoor shop has that exact name; similar real names exist (a tractor-accessory seller "ACME Outfitter", "ACME Outdoor Store", Acme Workwear, Acme Tools, Acme Markets) [F: web search, 2026-10-01]. So the demo keeps the "fictional" banner, uses no logo resembling any of them, and its e-mails and URLs use the reserved `.example` domain [P]. About 15 help articles, each written for the demo, with policies Felipe approves (P-03):
 
 - **Shipping:** standard 5–7 business days, free over $75; express 2 business days for $15.
 - **Returns:** within 30 days of delivery, unused and with tags; the customer pays return shipping unless the item is defective.
@@ -87,6 +87,8 @@ Size: 2–3 agent days [P: estimate].
 | Embeddings in the template | P3 starts [D: Q6] |
 
 ## 10. Proposals for Felipe
+
+All approved on 2026-10-01 ("todas ok"), P-01 as (c) "Acme Outfitters" [D].
 
 Answer format: "todas ok exceto P-03". My proposals miss more often on the store and its policies (P-01 to P-05), which are your domain, than on the software.
 
