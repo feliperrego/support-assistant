@@ -37,8 +37,8 @@ export function readCorpus(dir: string): CorpusFile[] {
 }
 
 /**
- * Each file's SHA-256 in `sha256sum` format ("<hex>  <file>\n"), sorted by file name. It is
- * committed as corpus/SHA256SUMS, which `shasum -a 256 -c` checks against the files.
+ * Each file's SHA-256 in `sha256sum` format ("<hex>  <file>\n"), sorted by file name: the input
+ * of corpusHash. P1 does not commit it; #2 committed it as corpus/SHA256SUMS.
  */
 export function corpusManifest(files: readonly CorpusFile[]): string {
   const sorted = [...files].sort(byFile);
@@ -51,8 +51,8 @@ export function corpusManifest(files: readonly CorpusFile[]): string {
 }
 
 /**
- * The hash of the sorted corpus files recorded in corpus/index.json (spec §4.2): the SHA-256
- * of their manifest, so `shasum -a 256 corpus/SHA256SUMS` prints the same value.
+ * The hash of the sorted help-center files (spec §4.2), recorded in
+ * content/help-center-index.json and in each eval run: the SHA-256 of their manifest.
  */
 export function corpusHash(files: readonly CorpusFile[]): string {
   return sha256(corpusManifest(files));

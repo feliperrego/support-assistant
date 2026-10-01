@@ -21,8 +21,8 @@ export function pickRunFile(files: readonly string[]): string {
 }
 
 /** The shown run, read from disk; a run without a summary is never shown. */
-export function readShownRun(dir: string = MEASUREMENTS_DIR): { file: string; run: EvalRun } {
-  const file = pickRunFile(readdirSync(dir));
+export function readShownRun(): { file: string; run: EvalRun } {
+  const file = pickRunFile(readdirSync(MEASUREMENTS_DIR));
   const run = JSON.parse(readFileSync(file, "utf8")) as EvalRun;
   if (run.aborted || run.summary === null) {
     throw new Error(`${file} is not a finished run: the inbox shows finished runs only.`);
