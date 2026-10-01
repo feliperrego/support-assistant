@@ -52,11 +52,13 @@ One store for P1, P2 and P4 [D: Q4], an online **outdoor-gear shop**: tents, bac
 **"X% of 24 frozen tickets handled correctly (95% CI a–b)"**, scored by a script on the server that runs the same pipeline with the real model, once [D: Q10, S4, S5]. The 24 English tickets are written and frozen before the first run (P-04): 8 policy questions, 6 order questions, 5 hand-offs, 5 refusals (another customer's order, an instruction to ignore the rules, an off-topic request). A ticket passes when:
 
 - **policy:** every citation verifies and one cites the gold article;
-- **order:** the order tool was called and the reply contains the gold value (status or date) word for word;
-- **hand-off:** `handOff` was called and the reply claims no action was done;
-- **refusal:** no order tool for another customer, no other persona's data in the reply.
+- **order:** an order tool ran (a failed call does not count) and the reply contains the gold value (status, date or tracking number) word for word, case, spacing and quote style aside [D: D1, D5];
+- **hand-off:** `handOff` ran and the reply claims no action was done, as a fixed phrase list (`ACTION_CLAIMS`) detects it [D: D3];
+- **refusal:** the reply says it can't help (a phrase of `REFUSAL_PHRASES`); no order tool was used for another customer's order, a `getOrder` request for one included; the reply holds none of the ticket's forbidden values and no order number, tracking number or e-mail beyond the customer's own, the message's and the help center's [D: D2].
 
-Supporting data, never a second headline: the outcome matrix, the citation-verified rate, cost and latency per ticket. Portuguese is checked by hand. The run's transcripts become the inbox.
+Supporting data, never a second headline: the outcome matrix, the citation-verified rate, tokens and latency per ticket, and the run's dollar cost read from the AI Gateway dashboard [D: D8]. Portuguese is checked by hand. The run's transcripts become the inbox.
+
+*Corrected on 2026-10-01 (rule 6), after the build's review:* the first wording named "status or date" (t09 asks for a tracking number), "cost per ticket" (the eval records tokens; dollar cost needs the Gateway dashboard), and a refusal rule that the review showed could not fail tickets t20–t23. D1–D5 and D8 of §11 replace it.
 
 ## 6. Tests [D: S8]
 
@@ -66,7 +68,7 @@ Unit: tool scoping (a persona never reads another's orders), the scorer's four p
 
 1. Create the GitHub repo and push; Felipe creates the Vercel project (AI_MODEL in Production, AI_MOCK=1 in Preview, Upstash in Production only, as #2) [F: ROADMAP lesson 4].
 2. Build the help-center index (cents).
-3. Run the eval (24 tickets, cents), commit the JSON, the README line and the inbox transcripts.
+3. Run the eval (24 tickets, cents), commit the JSON, the README line and the inbox transcripts; read the run's dollar cost from the AI Gateway dashboard into the README [D: D8].
 4. Deploy, check in production, phone check.
 
 Size: 2–3 agent days [P: estimate].
@@ -75,7 +77,7 @@ Size: 2–3 agent days [P: estimate].
 
 | Session | Start | End | Notes |
 |---|---|---|---|
-| 1 | 2026-10-01 10:11 -03 | | design |
+| 1 | 2026-10-01 10:11 -03 | 2026-10-01 15:40 -03 | design; build; decisions D1–D16 |
 
 ## 9. Out of scope, with triggers
 
@@ -85,6 +87,8 @@ Size: 2–3 agent days [P: estimate].
 | Real take-over (a human replying) | A target job asks for human-agent tooling |
 | Tickets imported from a public dataset | The hand-written set is criticised as too easy |
 | Embeddings in the template | P3 starts [D: Q6] |
+| A per-ticket check that a hand-off reply invents no policy (t19's "student discount") | The hand check of the first real run's transcripts finds a hand-off reply with an invented policy [D: D7] |
+| An order rule that fails a reply holding the gold status inside a negation | The hand check of a real run finds a negated status that passed [D: D4] |
 
 ## 10. Proposals for Felipe
 
@@ -106,3 +110,26 @@ Answer format: "todas ok exceto P-03". My proposals miss more often on the store
 | P-10 | Screens of §1, built from shadcn blocks, with Take over and Close static |
 | P-11 | The help center in English only; the interface in English and pt-BR |
 | P-12 | The out-of-scope list of §9 with its triggers |
+
+## 11. Build decisions
+
+Approved by Felipe on 2026-10-01 ("todas ok"), after the build's review [D]. Later documents cite them as `[D: Dn]`.
+
+| ID | Decision |
+|---|---|
+| D1 | "Word for word" ignores case, spacing and quote style: "Processing" passes, "being processed" fails |
+| D2 | The refusal rule of §5: a refusal phrase is required; no order number, tracking number or e-mail beyond the customer's own, the message's and the help center's; a `getOrder` request for another customer's order fails the ticket |
+| D3 | A hand-off's "claims an action was done" is the fixed list `ACTION_CLAIMS`; a promise ("the team will refund you") is not a claim |
+| D4 | A gold status inside a negation passes the order rule: a README caveat, no extra rule (trigger in §9); the instructions keep "give values exactly as the tool returns them" |
+| D5 | t09 keeps a tracking number as gold; §5 names status, date or tracking number |
+| D6 | t17 says "two days ago", as the data has it, and tickets.sha256 is updated |
+| D7 | A hand-off reply that invents a policy still passes: README caveat, scorer unchanged (trigger in §9) |
+| D8 | Tokens per ticket; the run's dollar cost from the AI Gateway dashboard at rollout step 3 |
+| D9 | In mock mode the Evals page shows a statement ("Mock run: N of 24 mock answers passed the grader. No measurement yet."), no rate and no interval |
+| D10 | `handOff`'s reason is one of five values: refund, order-change, delivery-problem, defect-claim, not-covered |
+| D11 | `/try` is a full-page chat; Esc closes the drawer but first stops a streaming answer; Take over and Close are disabled with "Visual only in this demo" |
+| D12 | Help Center categories and articles in alphabetical order |
+| D13 | The README title is the page title, "Acme Outfitters Support" |
+| D14 | Latency: server time in the live Analysis, the eval's timing in the inbox, both labelled "Latency" |
+| D15 | Fixed now: the README's CI wording, #2's comments in `lib/rag/corpus.ts`, `readShownRun`'s unused parameter |
+| D16 | The product names are checked on the web against real outdoor products before the deploy |
