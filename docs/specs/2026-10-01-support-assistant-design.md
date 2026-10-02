@@ -80,6 +80,8 @@ Size: 2–3 agent days [P: estimate].
 | Session | Start | End | Notes |
 |---|---|---|---|
 | 1 | 2026-10-01 10:11 -03 | 2026-10-01 16:17 -03 | design; build; decisions D1–D16 and N1–N5. Start and end are Felipe's first and last message of the session; the agent's work after his last message is not his time |
+| 2 | 2026-10-01 23:08 -03 | 2026-10-01 23:08 -03 | one message: rollout step 1 approved |
+| 3 | 2026-10-02 07:31 -03 | | ran `gh repo create … --push` himself (the agent's attempt was blocked by Claude Code's auto mode); first CI on GitHub |
 
 ## 9. Out of scope, with triggers
 
