@@ -1,6 +1,6 @@
 # Acme Outfitters Support — 92% of 24 frozen tickets handled correctly (95% CI 79–100%)
 
-[![CI](https://github.com/feliperrego/support-assistant/actions/workflows/ci.yml/badge.svg)](https://github.com/feliperrego/support-assistant/actions/workflows/ci.yml) · **[Live demo](<demo URL>)** · Part of the [feliperrego.com](https://feliperrego.com) portfolio
+[![CI](https://github.com/feliperrego/support-assistant/actions/workflows/ci.yml/badge.svg)](https://github.com/feliperrego/support-assistant/actions/workflows/ci.yml) · **[Live demo](https://support-assistant-smoky.vercel.app)** · Part of the [feliperrego.com](https://feliperrego.com) portfolio
 
 ## Problem
 A support assistant must answer from the store's own policies, look up only the asking customer's orders, and pass to a human what it may not do, such as a refund. This demo is the support desk of Acme Outfitters, a fictional outdoor-gear store: the inbox holds the transcripts of the last eval run, and "Try as a customer" chats with the live model, which answers from the help center with verified citations, looks up the chosen customer's orders, hands off refunds and order changes, and refuses other customers' data and off-topic requests.
