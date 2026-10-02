@@ -46,8 +46,13 @@ describe("customerCard", () => {
 });
 
 describe("analysisOf", () => {
+  // The tickets come from the shown run, the mock or the real one: a real answer may call a tool on
+  // any ticket, so none is named here.
   it("lists the retrieved passages with their scores and marks the ones the answer cites", () => {
-    const result = byId("t01");
+    const result = run.results.find(
+      ({ toolCalls, citations }) => toolCalls.length === 0 && citations.length > 0,
+    )!;
+    expect(result, "the shown run has a cited answer with no tool call").toBeDefined();
     const analysis = analysisOf(result);
     expect(analysis.passages).toHaveLength(5);
     expect(analysis.passages.map(({ number }) => number)).toEqual([1, 2, 3, 4, 5]);
@@ -65,12 +70,17 @@ describe("analysisOf", () => {
   });
 
   it("lists the tool calls of an order lookup and of a hand-off, with their inputs and outputs", () => {
-    expect(analysisOf(byId("t09")).toolCalls.map(({ toolName }) => toolName)).toEqual([
-      "listMyOrders",
-      "getOrder",
-    ]);
-    const [handOff] = analysisOf(byId("t15")).toolCalls;
-    expect(handOff.toolName).toBe("handOff");
+    const lookup = run.results.find(({ toolCalls }) =>
+      toolCalls.some(({ toolName }) => toolName === "getOrder"),
+    )!;
+    expect(lookup, "the shown run has a getOrder call").toBeDefined();
+    expect(analysisOf(lookup).toolCalls.map(({ toolName }) => toolName)).toEqual(
+      lookup.toolCalls.map(({ toolName }) => toolName),
+    );
+    expect(analysisOf(lookup).toolCalls.map(({ toolName }) => toolName)).toContain("getOrder");
+    const handedOff = run.results.find(({ actual }) => actual === "handed-off")!;
+    const handOff = analysisOf(handedOff).toolCalls.find(({ toolName }) => toolName === "handOff")!;
+    expect(handOff, "the shown run has a hand-off").toBeDefined();
     expect(handOff.input).toMatchObject({ reason: expect.any(String) });
     expect(handOff.output).toMatchObject({ handedOff: true });
   });
