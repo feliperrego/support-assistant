@@ -83,7 +83,7 @@ Before step 1 makes the product names public, the web check of D16 is done and i
   - **Hand check** (six readers, two skeptics per finding; scratchpad report): no verdict changes under the frozen rules; no D7 case (no hand-off invented a policy) and no D4 case (no negated or wrong order value). Quality notes: t01 and t06 looked up orders unasked, t03 listed orders twice, t17 advised waiting a day that had already passed, t18 asked for an order number the tool had. The outcome labels: four of the five refusals show as answered (t21, t22, a cited refusal) or order lookup (t20, t23, which listed the customer's own orders), because the label checks tools and citations before the refusal; all five pass.
   - **Trigger.** A-15 is the "one improvement" candidate of §9, whose trigger "P1's first measurement is published" fires at step 4.
   - **Approved on 2026-10-02 ("ok") [D]:** R1, the README caveat names the cause of both failures; R2, from the next run the outcome label is "refused" for a reply that states a refusal and does not hand off, whatever tools or citations it used (this run stays as recorded); R3, after the deploy the "one improvement" is A-15 (the verifier accepts `\"` as `"`), measured before and after with a second run.
-- **Step 4, 2026-10-02, with Felipe's OK.** Pushed `c2c7fd3..bd0e2cb`; CI run 37052552731 passed in 4 min 30 s; the production deploy is Ready at https://support-assistant-smoky.vercel.app and serves `bd0e2cb`. `/api/health` returns `{"ok":true,"model":"openai/gpt-6-luna","mock":false,"rateLimit":"upstash"}`. The inbox, the Evals page ("92% of 24 frozen tickets handled correctly", "95% CI 79–100%", no mock label) and the Help Center load. One live question, "How long do I have to return an item?" as Maya Chen, got "You can return an item within 30 days of its delivery. [1]", citing Returns › Return window, 1 of 1 quotes verified. The phone check is Felipe's.
+- **Step 4, 2026-10-02, with Felipe's OK.** Pushed `c2c7fd3..bd0e2cb`; CI run 37052552731 passed in 4 min 30 s; the production deploy is Ready at https://support-assistant-smoky.vercel.app and serves `bd0e2cb`. `/api/health` returns `{"ok":true,"model":"openai/gpt-6-luna","mock":false,"rateLimit":"upstash"}`. The inbox, the Evals page ("92% of 24 frozen tickets handled correctly", "95% CI 79–100%", no mock label) and the Help Center load. One live question, "How long do I have to return an item?" as Maya Chen, got "You can return an item within 30 days of its delivery. [1]", citing Returns › Return window, 1 of 1 quotes verified. The phone check is Felipe's: passed on 2026-10-05 [D: Felipe, "1. ok"].
 
 Size: 2–3 agent days [P: estimate].
 
@@ -93,7 +93,9 @@ Size: 2–3 agent days [P: estimate].
 |---|---|---|---|
 | 1 | 2026-10-01 10:11 -03 | 2026-10-01 16:17 -03 | design; build; decisions D1–D16 and N1–N5. Start and end are Felipe's first and last message of the session; the agent's work after his last message is not his time |
 | 2 | 2026-10-01 23:08 -03 | 2026-10-01 23:08 -03 | one message: rollout step 1 approved |
-| 3 | 2026-10-02 07:31 -03 | | ran `gh repo create … --push` himself (the agent's attempt was blocked by Claude Code's auto mode); first CI on GitHub |
+| 3 | 2026-10-02 07:31 -03 | 2026-10-02 07:31 -03 | ran `gh repo create … --push` himself (the agent's attempt was blocked by Claude Code's auto mode); first CI on GitHub |
+| 4 | 2026-10-02 15:18 -03 | 2026-10-02 16:11 -03 | Vercel project, Upstash, rollout steps 2–4 approved |
+| 5 | 2026-10-05 12:40 -03 | | phone check passed; push of the demo link; R2 and R3 started |
 
 ## 9. Out of scope, with triggers
 
