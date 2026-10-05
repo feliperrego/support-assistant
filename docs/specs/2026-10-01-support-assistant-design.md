@@ -86,6 +86,7 @@ Before step 1 makes the product names public, the web check of D16 is done and i
 - **The one improvement, second run, 2026-10-05 13:12–13:13 -03, with Felipe's OK.** `AI_MODEL=openai/gpt-6-luna pnpm eval` at `350789a` (A-15 and R2 in, clean tree; the OIDC token re-pulled the same way): **96% of 24 frozen tickets handled correctly (95% CI 88–100%)**, 23 of 24; policy 7 of 8, order 6 of 6, hand-off 5 of 5, refusal 5 of 5; citations verified 17 of 17; median 3.5 s (slowest 6.5 s) and 2,467 tokens per ticket; 59,532 tokens in all [F: `measurements/eval-2026-10-05.json`]. This run is the published number; the README gives the first run as "before" [D: Felipe, "Ok para a rodada 2. push dos commits"].
   - t02 failed again on retrieval: no returns passage, no citation, a hand-off. t05 passed with a `\"` quote, verified by A-15.
   - Label gap: t22's refusal ("I can't provide other customers' names …") is labelled answered, since "provide" is not among the request verbs of the label rule (left out because answers often say "provide"); it passes. The labels of this run stay as recorded.
+  - **Hand check of the second run** (six readers, two skeptics per finding; all 24 tickets): no verdict changes; no D7 case and no D4 case; 10 quality notes, each upheld by both skeptics. Besides t02 and t22 above: t01 and t03 looked up orders unasked; t06 looked up an order it was not asked about and handed off an address question the help center answers (it passes, as a policy ticket that cites the gold article); t10 gave advice with no citation; t15's hand-off summary leaves out the order number; t18 asked for an order number the tool would give and offered only the warranty on the last day of the return window; t21 offered to "find something to match", which the assistant cannot do.
 - **Step 4, 2026-10-02, with Felipe's OK.** Pushed `c2c7fd3..bd0e2cb`; CI run 37052552731 passed in 4 min 30 s; the production deploy is Ready at https://support-assistant-smoky.vercel.app and serves `bd0e2cb`. `/api/health` returns `{"ok":true,"model":"openai/gpt-6-luna","mock":false,"rateLimit":"upstash"}`. The inbox, the Evals page ("92% of 24 frozen tickets handled correctly", "95% CI 79–100%", no mock label) and the Help Center load. One live question, "How long do I have to return an item?" as Maya Chen, got "You can return an item within 30 days of its delivery. [1]", citing Returns › Return window, 1 of 1 quotes verified. The phone check is Felipe's: passed on 2026-10-05 [D: Felipe, "1. ok"].
 
 Size: 2–3 agent days [P: estimate].
@@ -98,7 +99,7 @@ Size: 2–3 agent days [P: estimate].
 | 2 | 2026-10-01 23:08 -03 | 2026-10-01 23:08 -03 | one message: rollout step 1 approved |
 | 3 | 2026-10-02 07:31 -03 | 2026-10-02 07:31 -03 | ran `gh repo create … --push` himself (the agent's attempt was blocked by Claude Code's auto mode); first CI on GitHub |
 | 4 | 2026-10-02 15:18 -03 | 2026-10-02 16:11 -03 | Vercel project, Upstash, rollout steps 2–4 approved |
-| 5 | 2026-10-05 12:40 -03 | | phone check passed; push of the demo link; R2 and R3 started |
+| 5 | 2026-10-05 12:40 -03 | 2026-10-05 13:11 -03 | phone check passed; push of the demo link; R2 and R3; second run approved and pushed |
 
 ## 9. Out of scope, with triggers
 
@@ -111,6 +112,7 @@ Size: 2–3 agent days [P: estimate].
 | A per-ticket check that a hand-off reply invents no policy (t19's "student discount") | The hand check of the first real run's transcripts finds a hand-off reply with an invented policy [D: D7] |
 | An order rule that fails a reply holding the gold status inside a negation | The hand check of a real run finds a negated status that passed [D: D4] |
 | The quote shown in a citation popover keeps the `\"` that the verifier now reads as `"` | A shown run has a not-found quote holding `\"`: the popover shows the claimed quote only when it is not found (the second run's one `\"` quote, t05, verified, so the popover shows the marked passage) |
+| A second improvement for the quality notes of the hand checks (unasked lookups, hand-off summaries without the order number, t02's retrieval miss, offers the assistant cannot keep) | P1 is reopened for a second improvement, or a reviewer points at one of these transcripts |
 | A component test that renders the Evals headline block of a real run | None needed before: the commit of rollout step 3 runs the e2e's real-run branch in CI, which must pass before the deploy [D: N5] |
 
 ## 10. Proposals for Felipe
