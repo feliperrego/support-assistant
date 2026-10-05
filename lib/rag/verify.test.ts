@@ -75,6 +75,20 @@ describe("verifyQuote", () => {
     expect(verifyQuote("one two\\nthree four", "one two\nthree four").status).toBe("not-found");
   });
 
+  it('still verifies an exact quote of a passage that holds a literal \\" (A-15 adds a reading)', () => {
+    const passage = 'In JSON, write \\"Returns\\" with the escapes.';
+    expect(verifyQuote('write \\"Returns\\" with the escapes', passage)).toEqual({
+      status: "verified",
+      start: 9,
+      end: 43,
+    });
+  });
+
+  it("keeps a backslash that does not escape a quote", () => {
+    const text = "C:\\Users\\me is the folder";
+    expect(verifyQuote(text, text)).toEqual({ status: "verified", start: 0, end: text.length });
+  });
+
   it.each([
     ["the first occurrence", "a b c a b c", "a b c", 0, 5],
     ["text after a surrogate pair", "🚀 Launch the rocket now", "launch the rocket", 3, 20],

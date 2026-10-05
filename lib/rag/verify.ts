@@ -140,11 +140,19 @@ function atWordEdges(text: string, at: number, needle: string): boolean {
 /**
  * Checks that a quote of 3 to 25 words is in its passage, after normalising both (spec §6.3),
  * as whole words. When verified, start and end select the match in the original passage, for
- * the <mark>. P1 adds A-15: the quote's \" reads as ", since models escape the quotes inside a
- * marker (P1 spec §7, R3); no other backslash escape is read.
+ * the <mark>. P1 adds A-15: when the quote as written is not found, it is read again with \" as ",
+ * since models escape the quotes inside a marker (P1 spec §7, R3). An exact quote of a passage
+ * that holds a literal \" still verifies, and no other backslash escape is read.
  */
 export function verifyQuote(quote: string, passage: string): Verification {
-  const needle = normalise(quote.replaceAll('\\"', '"'));
+  const asWritten = verifyNeedle(quote, passage);
+  const unescaped = quote.replaceAll('\\"', '"');
+  if (asWritten.status === "verified" || unescaped === quote) return asWritten;
+  return verifyNeedle(unescaped, passage);
+}
+
+function verifyNeedle(quote: string, passage: string): Verification {
+  const needle = normalise(quote);
   const words = countWords(needle);
   // A quote containing "] is not found (spec §6.3); after normalising, that covers ”] too.
   if (words < MIN_QUOTE_WORDS || words > MAX_QUOTE_WORDS || needle.includes('"]')) {

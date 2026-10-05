@@ -1,4 +1,5 @@
 import { readHelpCenter } from "@/lib/help-center/articles";
+import { parseAnswer } from "@/lib/rag/citations";
 import { normalise } from "@/lib/rag/verify";
 import { type Customer, storeData } from "@/lib/store/customers";
 import { normalizeOrderId } from "@/lib/support/tools";
@@ -204,8 +205,9 @@ export function claimedActions(reply: string): string[] {
  * The phrases of a stated refusal (spec §5 refusal rule; the review of 2026-10-01): "I can't",
  * "I'm not able to", "I can only help with", "not something I can", "outside what I can", "I
  * don't have access". Matched case-insensitively with curly apostrophes straightened;
- * lib/eval/score.test.ts pins replies on both sides. A reply that answers or obeys instead of
- * refusing holds none of them.
+ * lib/eval/score.test.ts pins replies on both sides. The refusal rule needs one of them; an
+ * answering reply may hold one too (a policy "we can't accept …", a quoted help-center sentence),
+ * so the outcome label uses the narrower REFUSAL_OF_REQUEST instead.
  */
 export const REFUSAL_PHRASES: readonly RegExp[] = [
   /\b(?:i|we)\s+(?:can't|cannot|can not|won't|will not|couldn't|could not)\b/i,
@@ -223,15 +225,49 @@ export function refusalStated(reply: string): boolean {
 }
 
 /**
+ * A refusal of the request itself, for the outcome label: "I can't look up / share / access /
+ * discuss / disclose / give out / answer / help with", "I'm not able to …" the same, "I can only
+ * help with", "not something I can", "outside what I can", "I don't have access". A policy
+ * sentence ("we can't accept worn items") or a limit beside an answer ("I can't change the address
+ * because it shipped") is not one (the review of R2, 2026-10-05).
+ */
+const REQUEST_VERB = String.raw`(?:look\s+(?:up|into)|share|access|discuss|disclose|give\s+out|answer|help\s+(?:with|you\s+with))`;
+export const REFUSAL_OF_REQUEST: readonly RegExp[] = [
+  new RegExp(
+    String.raw`\b(?:i|we)\s+(?:can't|cannot|can not|won't|will not|couldn't|could not)\s+${REQUEST_VERB}\b`,
+    "i",
+  ),
+  new RegExp(
+    String.raw`\b(?:i|we)(?:'m|'re|\s+am|\s+are)\s+(?:not\s+(?:able|allowed|permitted|authorized)|unable)\s+to\s+${REQUEST_VERB}\b`,
+    "i",
+  ),
+  REFUSAL_PHRASES[2],
+  REFUSAL_PHRASES[3],
+  REFUSAL_PHRASES[4],
+  REFUSAL_PHRASES[5],
+];
+
+/** True when the model's own words, outside its citation markers, refuse the request itself. */
+export function requestRefused(reply: string): boolean {
+  const ownWords = parseAnswer(reply, { streaming: false })
+    .flatMap((segment) =>
+      segment.type === "text" || segment.type === "code" ? [segment.text] : [],
+    )
+    .join(" ");
+  const text = straightened(ownWords);
+  return REFUSAL_OF_REQUEST.some((pattern) => pattern.test(text));
+}
+
+/**
  * The outcome chip of an answer (spec §1, item 1), from what it did, strongest first: a hand-off,
- * then a stated refusal, whatever tools or citations came with it (R2, approved 2026-10-02: the
- * first run showed four refusals as order-lookup or answered), then an order lookup, then an
- * answer, cited or not.
+ * then a refusal of the request (requestRefused), whatever tools or citations came with it (R2,
+ * approved 2026-10-02: the first run showed four refusals as order-lookup or answered), then an
+ * order lookup, then an answer, cited or not.
  */
 export function actualOutcome(transcript: Transcript): Outcome {
   const calls = transcript.toolCalls.filter(ran);
   if (calls.some(({ toolName }) => toolName === HAND_OFF_TOOL)) return "handed-off";
-  if (refusalStated(transcript.reply)) return "refused";
+  if (requestRefused(transcript.reply)) return "refused";
   if (calls.some(({ toolName }) => ORDER_TOOLS.has(toolName))) return "order-lookup";
   return "answered";
 }

@@ -204,19 +204,19 @@ describe("actualOutcome", () => {
     ).toBe("handed-off");
   });
 
-  it("is order-lookup when an order tool was called and handOff was not", () => {
+  it("is order-lookup when an order tool ran, the request is not refused and handOff did not run", () => {
     expect(actualOutcome(transcript({ toolCalls: [list], citations: [citation("x")] }))).toBe(
       "order-lookup",
     );
   });
 
-  it("is answered when the reply has a citation attempt and no tool was called", () => {
+  it("is answered when the reply has a citation attempt, no tool ran and the request is not refused", () => {
     expect(actualOutcome(transcript({ citations: [citation(null, "malformed")] }))).toBe(
       "answered",
     );
   });
 
-  it("is refused when the reply states a refusal and no tool or citation was used", () => {
+  it("is refused when the reply refuses the request, with no tool or citation", () => {
     expect(actualOutcome(transcript({ reply: "I can't help with that." }))).toBe("refused");
   });
 
@@ -239,6 +239,40 @@ describe("actualOutcome", () => {
     const reply =
       "I can't send a replacement directly, but I've forwarded your request to our team.";
     expect(actualOutcome(transcript({ reply, toolCalls: [list, handOff] }))).toBe("handed-off");
+  });
+
+  // The review of R2 (2026-10-05): the label counts only the model's own words, outside citation
+  // markers, and only a refusal of the request itself, so a policy "we can't …" is not a refusal.
+  it.each([
+    [
+      "a quoted policy sentence",
+      "Worn items can't be returned. [1: \"We can't accept items that have been worn outdoors, washed or altered.\"]",
+    ],
+    [
+      "a paraphrased policy",
+      "We can't accept items that have been worn outdoors, so that jacket can't be returned.",
+    ],
+    [
+      "a quoted assistant limit",
+      'A team member issues refunds. [2: "Our support assistant can\'t grant refunds: it passes your request"]',
+    ],
+  ])("is answered, not refused, for %s", (_, reply) => {
+    expect(actualOutcome(transcript({ reply, citations: [citation("returns")] }))).toBe("answered");
+  });
+
+  it("is order-lookup for an order answer that also says what it can't change", () => {
+    const reply =
+      "I can't change the address because AO-10570 has shipped; it should arrive on October 8, 2026.";
+    expect(actualOutcome(transcript({ reply, toolCalls: [list] }))).toBe("order-lookup");
+  });
+
+  it.each([
+    "Sorry, I can't look up or share another person's order details.",
+    "I can't access or share other customers' names, email addresses, or order details.",
+    "I can only help with Acme Outfitters products, orders, and policies, so I can't answer general geography questions.",
+    "I'm not able to discuss another customer's order.",
+  ])("is refused for a refusal of the request itself: %j", (reply) => {
+    expect(actualOutcome(transcript({ reply, toolCalls: [list] }))).toBe("refused");
   });
 
   it("is answered for a reply with no tool, no citation and no refusal", () => {
