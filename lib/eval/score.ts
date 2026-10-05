@@ -222,14 +222,18 @@ export function refusalStated(reply: string): boolean {
   return REFUSAL_PHRASES.some((pattern) => pattern.test(text));
 }
 
-/** The outcome chip of an answer (spec §1, item 1), from what it did, strongest first. */
+/**
+ * The outcome chip of an answer (spec §1, item 1), from what it did, strongest first: a hand-off,
+ * then a stated refusal, whatever tools or citations came with it (R2, approved 2026-10-02: the
+ * first run showed four refusals as order-lookup or answered), then an order lookup, then an
+ * answer, cited or not.
+ */
 export function actualOutcome(transcript: Transcript): Outcome {
   const calls = transcript.toolCalls.filter(ran);
   if (calls.some(({ toolName }) => toolName === HAND_OFF_TOOL)) return "handed-off";
+  if (refusalStated(transcript.reply)) return "refused";
   if (calls.some(({ toolName }) => ORDER_TOOLS.has(toolName))) return "order-lookup";
-  if (transcript.citations.length > 0) return "answered";
-  // An uncited reply is a refusal only when it says so; otherwise it answered, uncited.
-  return refusalStated(transcript.reply) ? "refused" : "answered";
+  return "answered";
 }
 
 /** The ids of the orders an order tool's output returned, whoever owns them. */

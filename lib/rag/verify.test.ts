@@ -57,6 +57,24 @@ describe("verifyQuote", () => {
     expect(mark(quote, PASSAGE)).toBe(marked);
   });
 
+  // A-15 (P1's one improvement, approved 2026-10-02 as R3): models write the quote's inner quotes as
+  // \" inside the marker; the run of 2026-10-02 lost t05 to it.
+  it('reads \\" in a quote as a quote mark (A-15)', () => {
+    const passage =
+      'On the sign-in page, choose "Forgot password?" and enter the email address on your account.';
+    const quote =
+      'On the sign-in page, choose \\"Forgot password?\\" and enter the email address on your account.';
+    expect(verifyQuote(quote, passage)).toEqual({
+      status: "verified",
+      start: 0,
+      end: passage.length,
+    });
+  });
+
+  it('reads no other backslash escape: \\n stays as written (A-15 covers \\" only)', () => {
+    expect(verifyQuote("one two\\nthree four", "one two\nthree four").status).toBe("not-found");
+  });
+
   it.each([
     ["the first occurrence", "a b c a b c", "a b c", 0, 5],
     ["text after a surrogate pair", "🚀 Launch the rocket now", "launch the rocket", 3, 20],
@@ -82,15 +100,20 @@ describe("verifyQuote", () => {
     ["without the link syntax", "The AI SDK provides the `embedMany` function for this purpose."],
     ["with the link syntax kept", LINKED],
   ])("verifies a quote of a linked passage %s, marking the original text (A-14)", (_, quote) => {
-    expect(verifyQuote(quote, LINKED)).toEqual({ status: "verified", start: 0, end: LINKED.length });
+    expect(verifyQuote(quote, LINKED)).toEqual({
+      status: "verified",
+      start: 0,
+      end: LINKED.length,
+    });
   });
 
   it("reduces a link whose text wraps onto the next line (A-14)", () => {
-    const passage = "See the [OpenAI provider\ndocumentation](/providers/openai#mcp-tool) for details.";
+    const passage =
+      "See the [OpenAI provider\ndocumentation](/providers/openai#mcp-tool) for details.";
     expect(mark("See the OpenAI provider documentation for details.", passage)).toBe(passage);
-    expect(mark("See the [OpenAI provider documentation](/providers/openai#mcp-tool) for", passage)).toBe(
-      passage.slice(0, -" details.".length),
-    );
+    expect(
+      mark("See the [OpenAI provider documentation](/providers/openai#mcp-tool) for", passage),
+    ).toBe(passage.slice(0, -" details.".length));
   });
 
   it("marks the whole link when a quote starts or ends at a link's text (A-14)", () => {
@@ -126,7 +149,13 @@ describe("verifyQuote", () => {
   it.each([
     ["the passage's edges", "embed many values", "embed many values", 0, 17],
     ["punctuation", "(embed many values).", "embed many values", 1, 18],
-    ["a later whole-word match", "reembed many values; embed many values", "embed many values", 21, 38],
+    [
+      "a later whole-word match",
+      "reembed many values; embed many values",
+      "embed many values",
+      21,
+      38,
+    ],
   ])("verifies a whole-word quote at %s", (_, passage, quote, start, end) => {
     expect(verifyQuote(quote, passage)).toEqual({ status: "verified", start, end });
   });

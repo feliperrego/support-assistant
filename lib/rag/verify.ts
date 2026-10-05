@@ -1,5 +1,6 @@
-// Copied from rag-citations (#2) lib/rag/verify.ts unchanged (spec §4). "spec" in the comments below
-// means the rag-citations spec, and R-nn/S-nn are its decisions.
+// Copied from rag-citations (#2) lib/rag/verify.ts (spec §4), with one change: verifyQuote reads \"
+// as " (A-15, P1's one improvement). "spec" in the comments below means the rag-citations spec, and
+// R-nn/S-nn are its decisions.
 import { countWords } from "./chunk";
 import type { CitationAttempt } from "./citations";
 
@@ -139,10 +140,11 @@ function atWordEdges(text: string, at: number, needle: string): boolean {
 /**
  * Checks that a quote of 3 to 25 words is in its passage, after normalising both (spec §6.3),
  * as whole words. When verified, start and end select the match in the original passage, for
- * the <mark>.
+ * the <mark>. P1 adds A-15: the quote's \" reads as ", since models escape the quotes inside a
+ * marker (P1 spec §7, R3); no other backslash escape is read.
  */
 export function verifyQuote(quote: string, passage: string): Verification {
-  const needle = normalise(quote);
+  const needle = normalise(quote.replaceAll('\\"', '"'));
   const words = countWords(needle);
   // A quote containing "] is not found (spec §6.3); after normalising, that covers ”] too.
   if (words < MIN_QUOTE_WORDS || words > MAX_QUOTE_WORDS || needle.includes('"]')) {
