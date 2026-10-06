@@ -40,13 +40,19 @@ export function citationLabel(n: number): string {
   return `[${n}]`;
 }
 
+/**
+ * A citation's status in its popover. Its text is darker than the variants', as VerdictBadge's
+ * (components/support/outcome.tsx), so it reads at 4.5:1 or more on its tint (P1 spec §7, E1;
+ * pinned by e2e/desk.spec.ts). Light only: nothing sets `.dark`.
+ */
 function StatusBadge({ status }: { status: CitationStatus }) {
   const { t } = useLocale();
   const verified = status === "verified";
   return (
     <Badge
       variant={verified ? "secondary" : "destructive"}
-      className={cn(verified && "bg-emerald-600/10 text-emerald-700")}
+      data-citation-status={status}
+      className={cn(verified ? "bg-emerald-600/10 text-emerald-800" : "text-red-700")}
     >
       {verified ? <CircleCheck /> : <CircleAlert />}
       {t.citation[STATUS_TEXT[status]]}

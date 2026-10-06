@@ -67,6 +67,9 @@ export function ConversationList({
         <ul className="divide-y">
           {conversations.map((conversation) => {
             const selected = conversation.id === selectedId;
+            // On the open row's grey (bg-muted), muted-foreground reads at 4.35:1; a shade darker
+            // reaches 4.5:1 (spec §7, E1; pinned by e2e/desk.spec.ts). Light only.
+            const secondary = selected ? "text-neutral-600" : "text-muted-foreground";
             return (
               <li key={conversation.id}>
                 <Link
@@ -80,11 +83,11 @@ export function ConversationList({
                 >
                   <span className="flex items-baseline justify-between gap-2">
                     <span className="truncate text-sm font-medium">{conversation.customer}</span>
-                    <span className="shrink-0 font-mono text-xs text-muted-foreground">
+                    <span className={cn("shrink-0 font-mono text-xs", secondary)}>
                       {conversation.id}
                     </span>
                   </span>
-                  <span lang="en" className="line-clamp-2 text-sm text-muted-foreground">
+                  <span lang="en" className={cn("line-clamp-2 text-sm", secondary)}>
                     {conversation.message}
                   </span>
                   <span className="flex flex-wrap gap-1.5">

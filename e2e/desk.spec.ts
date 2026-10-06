@@ -2,8 +2,10 @@ import { expect, test, type Locator, type Page } from "@playwright/test";
 import { SLOW_TRIGGER } from "@/lib/ai/mock-scenarios";
 import { headlineNumbers } from "@/lib/eval/summary";
 import { readShownRun } from "@/lib/inbox/run";
-import { isChatPost, textLength } from "./helpers/chat";
-import { MIN_TEXT_CONTRAST, textContrast } from "./helpers/contrast";
+import type { Source } from "@/lib/rag/message";
+import type { CitationStatus } from "@/lib/rag/verify";
+import { fulfillSse, isChatPost, sse, textLength } from "./helpers/chat";
+import { MIN_TEXT_CONTRAST, ownTexts, textContrast } from "./helpers/contrast";
 import { PROMPTS_EN } from "./helpers/fixtures";
 import { expectNoEnglish, expectPortuguese, waitForHydration } from "./helpers/i18n";
 
@@ -11,11 +13,12 @@ import { expectNoEnglish, expectPortuguese, waitForHydration } from "./helpers/i
 // shows a recorded conversation; the drawer gets a mock cited answer with a verified badge and
 // its Analysis; a hand-off shows its card; the Evals page renders the headline. Plus Esc around a
 // drawer closed while its answer streams (the template's X-02 design, X2-29), the contrast of the
-// pass/fail badges, Ctrl+B and Cmd+B left to the browser (spec §7, M3), the phone (S7) and the
-// pt-BR interface (P-11). The production build in mock mode shows the shown run of
-// lib/inbox/run.ts: the newest real run, or while none exists the committed mock run, whose
+// pass/fail badges (spec §7, M3), of the citation popover, the Evals matrix's mismatch counts and
+// the open conversation's row (spec §7, E1), Ctrl+B and Cmd+B left to the browser (spec §7, M3),
+// the phone (S7) and the pt-BR interface (P-11). The production build in mock mode shows the shown
+// run of lib/inbox/run.ts: the newest real run, or while none exists the committed mock run, whose
 // transcripts CI's `pnpm eval --check` has just checked against the pipeline (lib/eval/check.ts).
-// The drawer's answers come from the mock model either way.
+// The drawer's answers come from the mock model either way, except where a test stubs one.
 
 const { run } = readShownRun();
 
@@ -241,6 +244,126 @@ test("every pass/fail badge the desk shows reads at 4.5:1 or more, on the page a
       const label = `${path}: ${await where(badge)}`;
       expect.soft(await textContrast(badge), label).toBeGreaterThanOrEqual(MIN_TEXT_CONTRAST);
     }
+  }
+});
+
+// E1 (spec §7): the texts the X-02 reviews measured below 4.5:1 in the desk's only theme, light,
+// read from the colours the browser computed (helpers/contrast.ts).
+
+/** The one passage of the stubbed answer below, as the data-sources part carries it. */
+const PASSAGE: Source = {
+  number: 1,
+  article: "returns",
+  file: "returns.md",
+  heading: "Return window",
+  startLine: 1,
+  endLine: 2,
+  text: "You can return an item within 30 days of its delivery.",
+  url: "/help-center/returns#return-window",
+  score: 0.8,
+};
+
+/** A citation of each status, in the order the stubbed answer makes them (lib/rag/verify.ts). */
+const STUBBED_CITATIONS: readonly (readonly [CitationStatus, string])[] = [
+  ["verified", '[1: "You can return an item within 30 days of its delivery."]'],
+  ["not-found", '[1: "Worn items can be returned."]'],
+  // The answer got one passage, so there is no source 2.
+  ["unknown-source", '[2: "Shipping is free."]'],
+  // A bracketed number with no quote.
+  ["malformed", "[3]"],
+];
+
+test("every text in a citation's popover reads at 4.5:1 or more, whatever the citation's status", async ({
+  page,
+}) => {
+  // The mock model quotes only what it retrieved, so the failing statuses need a stubbed answer.
+  const answer = STUBBED_CITATIONS.map(([, citation], i) => `Sentence ${i + 1} ${citation}.`);
+  await page.route("**/api/chat", (route) =>
+    fulfillSse(
+      route,
+      sse([
+        { type: "start" },
+        { type: "start-step" },
+        { type: "data-sources", data: [PASSAGE] },
+        { type: "text-start", id: "t" },
+        { type: "text-delta", id: "t", delta: answer.join(" ") },
+        { type: "text-end", id: "t" },
+        { type: "finish-step" },
+        { type: "finish", finishReason: "stop" },
+      ]),
+    ),
+  );
+  const panel = await openDrawer(page);
+  await panel.getByRole("textbox").fill(PROMPTS_EN[0]);
+  await panel.getByRole("button", { name: "Send message" }).click();
+  await expect(panel.getByRole("button", { name: "Send message" })).toBeVisible();
+
+  const triggers = panel.locator('[data-message-role="assistant"] [data-citation-verified]');
+  await expect(triggers).toHaveCount(STUBBED_CITATIONS.length);
+  const popover = page.locator('[data-slot="popover-content"]');
+  for (const [i, [status]] of STUBBED_CITATIONS.entries()) {
+    await triggers.nth(i).click();
+    await expect(popover.locator("[data-citation-status]")).toHaveAttribute(
+      "data-citation-status",
+      status,
+    );
+    for (const { element, text } of await ownTexts(popover)) {
+      const label = `${status} popover: "${text.slice(0, 40)}"`;
+      expect.soft(await textContrast(element), label).toBeGreaterThanOrEqual(MIN_TEXT_CONTRAST);
+    }
+    await page.keyboard.press("Escape");
+    await expect(popover).toBeHidden();
+  }
+});
+
+test("every count above zero in the Evals matrix reads at 4.5:1 or more", async ({ page }) => {
+  // A count off the diagonal is a mismatch, on a red tint (components/evals/evals-view.tsx); the
+  // run's summary says how many there are. A zero's faded grey is not read here.
+  const mismatches = Object.entries(run.summary!.matrix).flatMap(([expected, row]) =>
+    Object.entries(row).filter(([actual, count]) => actual !== expected && count > 0),
+  );
+  await page.goto("/evals");
+  await waitForHydration(page);
+  const cells = page.getByTestId("matrix").locator("tbody td");
+  await expect(cells).toHaveCount(16);
+
+  let offDiagonal = 0;
+  for (const cell of await cells.all()) {
+    const place = await cell.evaluate((element) => {
+      const td = element as HTMLTableCellElement;
+      const row = td.parentElement as HTMLTableRowElement;
+      const column = td.closest("table")?.querySelectorAll("thead th")[td.cellIndex];
+      const expected = row.querySelector("th")?.textContent;
+      return {
+        count: Number(td.textContent),
+        diagonal: td.cellIndex === row.sectionRowIndex + 1,
+        label: `expected ${expected}, actual ${column?.textContent}: ${td.textContent}`,
+      };
+    });
+    if (place.count === 0) continue;
+    if (!place.diagonal) offDiagonal += 1;
+    expect.soft(await textContrast(cell), place.label).toBeGreaterThanOrEqual(MIN_TEXT_CONTRAST);
+  }
+  expect(offDiagonal).toBe(mismatches.length);
+});
+
+test("every text in the open conversation's row reads at 4.5:1 or more on its grey", async ({
+  page,
+}) => {
+  // "/" opens the run's first ticket, whose row has the selected background, bg-muted
+  // (components/inbox/conversation-list.tsx): the customer, the ticket id, the message preview and
+  // the chip's and badge's labels.
+  await page.goto("/");
+  await waitForHydration(page);
+  const row = conversationList(page).locator('[aria-current="page"]');
+  await expect(row).toHaveAttribute("data-ticket", run.results[0].id);
+  const texts = await ownTexts(row);
+  expect(texts.map(({ text }) => text)).toEqual(
+    expect.arrayContaining([run.results[0].id, run.results[0].message]),
+  );
+  for (const { element, text } of texts) {
+    const label = `open row ${run.results[0].id}: "${text.slice(0, 40)}"`;
+    expect.soft(await textContrast(element), label).toBeGreaterThanOrEqual(MIN_TEXT_CONTRAST);
   }
 });
 

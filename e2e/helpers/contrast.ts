@@ -1,8 +1,8 @@
 import type { Locator } from "@playwright/test";
 
 /**
- * WCAG 2.2's minimum contrast for text below 18.66 px bold or 24 px (SC 1.4.3, level AA). The
- * desk's badges are 12 px medium text.
+ * WCAG 2.2's minimum contrast for text below 18.66 px bold or 24 px (SC 1.4.3, level AA). Every
+ * text the desk's contrast e2e reads is 14 px or smaller: the badges are 12 px medium text.
  */
 export const MIN_TEXT_CONTRAST = 4.5;
 
@@ -62,4 +62,26 @@ export async function textContrast(locator: Locator): Promise<number> {
     const [lighter, darker] = [luminance(text), luminance(background)].sort((a, b) => b - a);
     return (lighter + 0.05) / (darker + 0.05);
   });
+}
+
+/**
+ * The visible elements inside `root`, itself included, that hold text of their own (a text node
+ * as a direct child), each with that text: the ones whose colour is the text's colour.
+ */
+export async function ownTexts(root: Locator): Promise<{ element: Locator; text: string }[]> {
+  const elements = [root, ...(await root.locator("*").all())];
+  const texts = await Promise.all(
+    elements.map((locator) =>
+      locator.evaluate((element) =>
+        element.checkVisibility()
+          ? [...element.childNodes]
+              .filter((node) => node.nodeType === Node.TEXT_NODE)
+              .map((node) => node.textContent ?? "")
+              .join("")
+              .trim()
+          : "",
+      ),
+    ),
+  );
+  return elements.flatMap((element, i) => (texts[i] === "" ? [] : [{ element, text: texts[i] }]));
 }
