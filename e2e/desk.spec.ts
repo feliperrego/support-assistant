@@ -11,10 +11,11 @@ import { expectNoEnglish, expectPortuguese, waitForHydration } from "./helpers/i
 // shows a recorded conversation; the drawer gets a mock cited answer with a verified badge and
 // its Analysis; a hand-off shows its card; the Evals page renders the headline. Plus Esc around a
 // drawer closed while its answer streams (the template's X-02 design, X2-29), the contrast of the
-// pass/fail badges, the phone (S7) and the pt-BR interface (P-11). The production build in mock
-// mode shows the shown run of lib/inbox/run.ts: the newest real run, or while none exists the
-// committed mock run, whose transcripts CI's `pnpm eval --check` has just checked against the
-// pipeline (lib/eval/check.ts). The drawer's answers come from the mock model either way.
+// pass/fail badges, Ctrl+B and Cmd+B left to the browser (spec §7, M3), the phone (S7) and the
+// pt-BR interface (P-11). The production build in mock mode shows the shown run of
+// lib/inbox/run.ts: the newest real run, or while none exists the committed mock run, whose
+// transcripts CI's `pnpm eval --check` has just checked against the pipeline (lib/eval/check.ts).
+// The drawer's answers come from the mock model either way.
 
 const { run } = readShownRun();
 
@@ -241,6 +242,32 @@ test("every pass/fail badge the desk shows reads at 4.5:1 or more, on the page a
       expect.soft(await textContrast(badge), label).toBeGreaterThanOrEqual(MIN_TEXT_CONTRAST);
     }
   }
+});
+
+// The desk leaves Ctrl+B and Cmd+B to the browser and to the page, such as bold in a text field:
+// the generated sidebar's shortcut, which toggled a sidebar the desk holds open from md up, is
+// removed (spec §7, M3; components/ui/sidebar.tsx).
+test("at desktop width the desk takes neither Ctrl+B nor Cmd+B", async ({ page }) => {
+  await page.goto("/");
+  await waitForHydration(page);
+  // From md up the sidebar is shown, not a sheet behind the header's nav button.
+  await expect(page.getByRole("button", { name: "Open the navigation" })).toBeHidden();
+  // Added after every listener the page's own code added on window, so it runs last.
+  await page.evaluate(() => {
+    const prevented: boolean[] = [];
+    Object.assign(window, { boldKeysPrevented: prevented });
+    window.addEventListener("keydown", (event) => {
+      if (event.key === "b") prevented.push(event.defaultPrevented);
+    });
+  });
+  await page.keyboard.press("Control+b");
+  await page.keyboard.press("Meta+b");
+  const prevented = await page.evaluate(
+    () => (window as unknown as { boldKeysPrevented: boolean[] }).boldKeysPrevented,
+  );
+  expect(prevented).toEqual([false, false]);
+  // Nor does either key store a sidebar state, as the shortcut's toggle did on every press.
+  expect(await page.evaluate(() => document.cookie)).not.toContain("sidebar_state");
 });
 
 test("in Portuguese the desk shows no English interface text", async ({ page }) => {

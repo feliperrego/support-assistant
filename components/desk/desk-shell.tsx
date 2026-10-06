@@ -124,8 +124,9 @@ function NavTrigger() {
   );
 }
 
-// From md up the sidebar stays open: a controlled state that never changes, so the sidebar's
-// keyboard shortcut cannot hide it with no button to bring it back.
+// From md up the sidebar stays open: a controlled state that never changes, so no toggle can hide
+// it with no button to bring it back. The generated sidebar's Ctrl+B / Cmd+B shortcut was one; it
+// is removed from components/ui/sidebar.tsx (spec §7, M3).
 const ALWAYS = () => {};
 
 /**
