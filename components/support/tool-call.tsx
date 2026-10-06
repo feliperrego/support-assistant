@@ -5,13 +5,19 @@ import { format } from "@/lib/i18n/format";
 import type { Messages } from "@/lib/i18n/messages";
 import { stringField, type ToolView } from "@/lib/support/tool-view";
 
-/** What a tool call did, in the interface language (spec §1, item 2). */
+/**
+ * A tool call's name in the interface language (spec §1, item 2): the chip's label, which reads
+ * the same in every state the chip adds after it (spec §7, E2). The input may still be
+ * streaming, so the order id may be missing or empty: the label then leaves it out.
+ */
 export function toolLabel(view: ToolView, t: Messages): string {
   switch (view.name) {
     case "listMyOrders":
       return t.tool.listMyOrders;
-    case "getOrder":
-      return format(t.tool.getOrder, { id: stringField(view.input, "orderId") ?? "" });
+    case "getOrder": {
+      const id = stringField(view.input, "orderId")?.trim() ?? "";
+      return id === "" ? t.tool.getOrder : format(t.tool.getOrderWithId, { id });
+    }
     case "handOff":
       return t.tool.handOff;
     default:
@@ -58,7 +64,7 @@ export function ToolCallData({ view }: { view: ToolView }) {
 }
 
 /**
- * A tool chip (spec §1, item 2): what the call did, its state, and on a click its input and
+ * A tool chip (spec §1, item 2): the call's name, its state, and on a click its input and
  * output. data-tool and data-tool-state are what the e2e reads.
  */
 export function ToolCall({ view }: { view: ToolView }) {

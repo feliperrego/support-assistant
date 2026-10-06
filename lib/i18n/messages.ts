@@ -86,10 +86,17 @@ export type ProjectMessages = {
   };
   /** Each condition of a pass rule (lib/eval/score.ts), as the Analysis tab names it. */
   check: Record<CheckId, string>;
-  /** The tool chips (spec §1, item 2). */
+  /**
+   * The tool chips (spec §1, item 2). A chip shows its label while the call runs and adds the
+   * call's state after it ("Working", "The tool failed"), so a label names the call, as a noun,
+   * and never says what the call did (spec §7, E2; the template's W-P22). `getOrderWithId` adds
+   * the order, `{id}`, once the input has streamed it; until then the chip shows `getOrder`.
+   * `other` names a tool this dictionary does not.
+   */
   tool: {
     listMyOrders: string;
     getOrder: string;
+    getOrderWithId: string;
     handOff: string;
     other: string;
     running: string;
@@ -277,10 +284,11 @@ export const projectMessages: Record<Locale, ProjectMessages> = {
         "The reply names no order number, tracking number or email beyond the customer's own, the message's and the Help Center's",
     },
     tool: {
-      listMyOrders: "Looked up the customer's orders",
-      getOrder: "Looked up order {id}",
-      handOff: "Handed off to the team",
-      other: "Called {name}",
+      listMyOrders: "Customer's orders",
+      getOrder: "Order lookup",
+      getOrderWithId: "Order lookup: {id}",
+      handOff: "Hand-off to the team",
+      other: "Tool: {name}",
       running: "Working",
       failed: "The tool failed",
       input: "Input",
@@ -477,10 +485,11 @@ export const projectMessages: Record<Locale, ProjectMessages> = {
         "A resposta não cita número de pedido, código de rastreio ou e-mail além dos do cliente, da mensagem e da Central de Ajuda",
     },
     tool: {
-      listMyOrders: "Consultou os pedidos do cliente",
-      getOrder: "Consultou o pedido {id}",
-      handOff: "Encaminhou para a equipe",
-      other: "Chamou {name}",
+      listMyOrders: "Pedidos do cliente",
+      getOrder: "Consulta de pedido",
+      getOrderWithId: "Consulta do pedido {id}",
+      handOff: "Encaminhamento à equipe",
+      other: "Ferramenta: {name}",
       running: "Em andamento",
       failed: "A ferramenta falhou",
       input: "Entrada",
