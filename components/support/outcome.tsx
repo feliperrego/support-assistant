@@ -24,14 +24,18 @@ export function OutcomeChip({ outcome, className }: { outcome: Outcome; classNam
   );
 }
 
-/** The pass/fail badge of an eval ticket (spec §1, item 1; scored by lib/eval/score.ts). */
+/**
+ * The pass/fail badge of an eval ticket (spec §1, item 1; scored by lib/eval/score.ts). Its text
+ * is darker than the variants' so it reads at 4.5:1 or more on the page and in the open
+ * conversation's row (bg-muted), pinned by e2e/desk.spec.ts. Light only: nothing sets `.dark`.
+ */
 export function VerdictBadge({ pass, className }: { pass: boolean; className?: string }) {
   const { t } = useLocale();
   return (
     <Badge
       variant={pass ? "secondary" : "destructive"}
       data-verdict={pass ? "pass" : "fail"}
-      className={cn(pass && "bg-emerald-600/10 text-emerald-700", className)}
+      className={cn(pass ? "bg-emerald-600/10 text-emerald-800" : "text-red-700", className)}
     >
       {pass ? <CircleCheck /> : <CircleX />}
       {pass ? t.verdict.pass : t.verdict.fail}

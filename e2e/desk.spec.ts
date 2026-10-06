@@ -3,16 +3,18 @@ import { SLOW_TRIGGER } from "@/lib/ai/mock-scenarios";
 import { headlineNumbers } from "@/lib/eval/summary";
 import { readShownRun } from "@/lib/inbox/run";
 import { isChatPost, textLength } from "./helpers/chat";
+import { MIN_TEXT_CONTRAST, textContrast } from "./helpers/contrast";
 import { PROMPTS_EN } from "./helpers/fixtures";
 import { expectNoEnglish, expectPortuguese, waitForHydration } from "./helpers/i18n";
 
 // Smoke e2e of P1's support desk (spec §6; ROADMAP S8: one smoke e2e per main flow): the inbox
 // shows a recorded conversation; the drawer gets a mock cited answer with a verified badge and
 // its Analysis; a hand-off shows its card; the Evals page renders the headline. Plus Esc around a
-// drawer closed while its answer streams (the template's X-02 design, X2-29), the phone (S7) and
-// the pt-BR interface (P-11). The production build in mock mode shows the committed mock
-// run, whose transcripts CI's `pnpm eval --check` has just checked against the pipeline
-// (lib/eval/check.ts).
+// drawer closed while its answer streams (the template's X-02 design, X2-29), the contrast of the
+// pass/fail badges, the phone (S7) and the pt-BR interface (P-11). The production build in mock
+// mode shows the shown run of lib/inbox/run.ts: the newest real run, or while none exists the
+// committed mock run, whose transcripts CI's `pnpm eval --check` has just checked against the
+// pipeline (lib/eval/check.ts). The drawer's answers come from the mock model either way.
 
 const { run } = readShownRun();
 
@@ -200,6 +202,45 @@ test("the Evals page renders the headline (a real run's CI, or a mock statement)
   await page.getByRole("link", { name: "Open the transcript of ticket t02" }).click();
   await expect(page).toHaveURL(/\/inbox\/t02/);
   await expect(thread(page).getByRole("heading", { level: 2, name: "Maya Chen" })).toBeVisible();
+});
+
+test("every pass/fail badge the desk shows reads at 4.5:1 or more, on the page and in the open conversation's row", async ({
+  page,
+}) => {
+  // "/" opens the run's first ticket, whose row has the selected background (bg-muted); the
+  // first ticket of the other verdict is opened on its own page, so each verdict is read in a
+  // selected row too. A run with one verdict only shows no badge of the other anywhere.
+  const [first] = run.results;
+  const other = run.results.find(({ pass }) => pass !== first.pass);
+  const paths = ["/", ...(other ? [`/inbox/${other.id}`] : []), "/evals"];
+  const where = (badge: Locator) =>
+    badge.evaluate((element) => {
+      const verdict = element.getAttribute("data-verdict");
+      const row = element.closest("[data-ticket]");
+      if (row) {
+        const open = row.hasAttribute("aria-current") ? ", open" : "";
+        return `${verdict} badge in row ${row.getAttribute("data-ticket")}${open}`;
+      }
+      const box = element.closest("[data-testid]")?.getAttribute("data-testid") ?? "panel";
+      return `${verdict} badge in ${box}`;
+    });
+
+  for (const path of paths) {
+    await page.goto(path);
+    await waitForHydration(page);
+    if (path !== "/evals") {
+      const open = run.results.find(({ id }) => path.endsWith(`/${id}`)) ?? first;
+      await expect(
+        conversationList(page).locator('[aria-current="page"] [data-verdict]'),
+      ).toHaveAttribute("data-verdict", open.pass ? "pass" : "fail");
+    }
+    const badges = page.locator("[data-verdict]").filter({ visible: true });
+    await expect(badges.first()).toBeVisible();
+    for (const badge of await badges.all()) {
+      const label = `${path}: ${await where(badge)}`;
+      expect.soft(await textContrast(badge), label).toBeGreaterThanOrEqual(MIN_TEXT_CONTRAST);
+    }
+  }
 });
 
 test("in Portuguese the desk shows no English interface text", async ({ page }) => {
