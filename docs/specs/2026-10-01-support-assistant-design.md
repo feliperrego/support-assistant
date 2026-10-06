@@ -120,6 +120,7 @@ Size: 2–3 agent days [P: estimate].
 | An order rule that fails a reply holding the gold status inside a negation | The hand check of a real run finds a negated status that passed [D: D4] |
 | The quote shown in a citation popover keeps the `\"` that the verifier now reads as `"` | A shown run has a not-found quote holding `\"`: the popover shows the claimed quote only when it is not found (the second run's one `\"` quote, t05, verified, so the popover shows the marked passage) |
 | A second improvement for the quality notes of the hand checks (unasked lookups, hand-off summaries without the order number, t02's retrieval miss, offers the assistant cannot keep) | P1 is reopened for a second improvement, or a reviewer points at one of these transcripts |
+| Text contrast in hover or open states, measured after E1 (2026-10-06): a failing citation's [n] on bg-muted (4.38:1), a tool chip's state word on hover, a non-open inbox row on hover (4.50:1, at the threshold) | A visitor's report, or the next accessibility pass on P1 |
 | A component test that renders the Evals headline block of a real run | None needed before: the commit of rollout step 3 runs the e2e's real-run branch in CI, which must pass before the deploy [D: N5] |
 | For about 200 ms after the drawer closes, its chat still counts as rendered, so an Esc then stops the answer about to be hidden | A visitor's report, or the next change to the drawer |
 
