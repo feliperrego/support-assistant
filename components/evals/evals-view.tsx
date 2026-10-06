@@ -147,13 +147,15 @@ export function EvalsView({ data }: { data: EvalsData }) {
                   const count = summary.matrix[expected][actual];
                   return (
                     // A mismatch's red is a shade darker than text-destructive, so it reads at
-                    // 4.5:1 or more on its tint (spec §7, E1; pinned by e2e/desk.spec.ts).
+                    // 4.5:1 or more on its tint; a zero's grey is muted-foreground unfaded, 4.5:1
+                    // or more on the row and on its hover (spec §7, E1; pinned by
+                    // e2e/desk.spec.ts).
                     <TableCell
                       key={actual}
                       className={cn(
                         "text-center tabular-nums",
                         expected === actual ? "font-semibold" : "",
-                        count === 0 && "text-muted-foreground/60",
+                        count === 0 && "text-muted-foreground",
                         count > 0 && expected !== actual && "bg-destructive/10 text-red-700",
                       )}
                     >

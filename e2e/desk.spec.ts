@@ -13,7 +13,7 @@ import { expectNoEnglish, expectPortuguese, waitForHydration } from "./helpers/i
 // shows a recorded conversation; the drawer gets a mock cited answer with a verified badge and
 // its Analysis; a hand-off shows its card; the Evals page renders the headline. Plus Esc around a
 // drawer closed while its answer streams (the template's X-02 design, X2-29), the contrast of the
-// pass/fail badges (spec §7, M3), of the citation popover, the Evals matrix's mismatch counts and
+// pass/fail badges (spec §7, M3), of the citation popover, the Evals matrix's counts and
 // the open conversation's row (spec §7, E1), Ctrl+B and Cmd+B left to the browser (spec §7, M3),
 // the phone (S7) and the pt-BR interface (P-11). The production build in mock mode shows the shown
 // run of lib/inbox/run.ts: the newest real run, or while none exists the committed mock run, whose
@@ -316,35 +316,56 @@ test("every text in a citation's popover reads at 4.5:1 or more, whatever the ci
   }
 });
 
-test("every count above zero in the Evals matrix reads at 4.5:1 or more", async ({ page }) => {
-  // A count off the diagonal is a mismatch, on a red tint (components/evals/evals-view.tsx); the
-  // run's summary says how many there are. A zero's faded grey is not read here.
-  const mismatches = Object.entries(run.summary!.matrix).flatMap(([expected, row]) =>
-    Object.entries(row).filter(([actual, count]) => actual !== expected && count > 0),
+test("every count in the Evals matrix reads at 4.5:1 or more", async ({ page }) => {
+  // A count off the diagonal is a mismatch, on a red tint, and a zero is grey
+  // (components/evals/evals-view.tsx); the run's summary says how many of each there are. Each
+  // count is read on its row and again with the row hovered, since a table row greys on hover.
+  const counts = Object.entries(run.summary!.matrix).flatMap(([expected, row]) =>
+    Object.entries(row).map(([actual, count]) => ({ mismatch: actual !== expected, count })),
   );
   await page.goto("/evals");
   await waitForHydration(page);
   const cells = page.getByTestId("matrix").locator("tbody td");
   await expect(cells).toHaveCount(16);
 
-  let offDiagonal = 0;
-  for (const cell of await cells.all()) {
-    const place = await cell.evaluate((element) => {
-      const td = element as HTMLTableCellElement;
-      const row = td.parentElement as HTMLTableRowElement;
-      const column = td.closest("table")?.querySelectorAll("thead th")[td.cellIndex];
-      const expected = row.querySelector("th")?.textContent;
-      return {
-        count: Number(td.textContent),
-        diagonal: td.cellIndex === row.sectionRowIndex + 1,
-        label: `expected ${expected}, actual ${column?.textContent}: ${td.textContent}`,
-      };
-    });
-    if (place.count === 0) continue;
-    if (!place.diagonal) offDiagonal += 1;
-    expect.soft(await textContrast(cell), place.label).toBeGreaterThanOrEqual(MIN_TEXT_CONTRAST);
+  const places = await Promise.all(
+    (await cells.all()).map(async (cell) => ({
+      cell,
+      ...(await cell.evaluate((element) => {
+        const td = element as HTMLTableCellElement;
+        const row = td.parentElement as HTMLTableRowElement;
+        const column = td.closest("table")?.querySelectorAll("thead th")[td.cellIndex];
+        const expected = row.querySelector("th")?.textContent;
+        return {
+          count: Number(td.textContent),
+          mismatch: td.cellIndex !== row.sectionRowIndex + 1,
+          label: `expected ${expected}, actual ${column?.textContent}: ${td.textContent}`,
+        };
+      })),
+    })),
+  );
+  expect(places.filter(({ count }) => count === 0)).toHaveLength(
+    counts.filter(({ count }) => count === 0).length,
+  );
+  expect(places.filter(({ mismatch, count }) => mismatch && count > 0)).toHaveLength(
+    counts.filter(({ mismatch, count }) => mismatch && count > 0).length,
+  );
+
+  // Out of the table, so no row is hovered.
+  await page.mouse.move(0, 0);
+  for (const { cell, label } of places) {
+    expect.soft(await textContrast(cell), label).toBeGreaterThanOrEqual(MIN_TEXT_CONTRAST);
   }
-  expect(offDiagonal).toBe(mismatches.length);
+  for (const { cell, label } of places) {
+    await cell.hover();
+    // The row's background eases in (transition-colors); read it once it has settled.
+    await cell.evaluate((td) =>
+      Promise.all(td.parentElement!.getAnimations().map(({ finished }) => finished)),
+    );
+    expect
+      .soft(await textContrast(cell), `hovered row, ${label}`)
+      .toBeGreaterThanOrEqual(MIN_TEXT_CONTRAST);
+  }
 });
 
 test("every text in the open conversation's row reads at 4.5:1 or more on its grey", async ({
