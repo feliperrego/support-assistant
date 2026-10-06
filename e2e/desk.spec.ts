@@ -1,14 +1,16 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
+import { SLOW_TRIGGER } from "@/lib/ai/mock-scenarios";
 import { headlineNumbers } from "@/lib/eval/summary";
 import { readShownRun } from "@/lib/inbox/run";
-import { isChatPost } from "./helpers/chat";
+import { isChatPost, textLength } from "./helpers/chat";
 import { PROMPTS_EN } from "./helpers/fixtures";
 import { expectNoEnglish, expectPortuguese, waitForHydration } from "./helpers/i18n";
 
 // Smoke e2e of P1's support desk (spec §6; ROADMAP S8: one smoke e2e per main flow): the inbox
 // shows a recorded conversation; the drawer gets a mock cited answer with a verified badge and
-// its Analysis; a hand-off shows its card; the Evals page renders the headline. Plus the phone
-// (S7) and the pt-BR interface (P-11). The production build in mock mode shows the committed mock
+// its Analysis; a hand-off shows its card; the Evals page renders the headline. Plus Esc around a
+// drawer closed while its answer streams (the template's X-02 design, X2-29), the phone (S7) and
+// the pt-BR interface (P-11). The production build in mock mode shows the committed mock
 // run, whose transcripts CI's `pnpm eval --check` has just checked against the pipeline
 // (lib/eval/check.ts).
 
@@ -129,6 +131,48 @@ test("a hand-off shows its card, and the drawer keeps it across closing and the 
   await expect(page).toHaveURL("/evals");
   await page.getByRole("button", { name: "Try as a customer" }).click();
   await expect(drawer(page).locator('[data-hand-off="done"]')).toBeVisible();
+});
+
+test("a drawer closed by an outside click keeps streaming; an Esc on the desk leaves the answer alone, one in the reopened drawer stops it", async ({
+  page,
+}) => {
+  const panel = await openDrawer(page);
+  // The popup by its slot, not by its role: closed, it stays mounted but hidden, and role
+  // locators skip hidden elements. The inbox's thread has an assistant message of its own.
+  const popup = page.locator('[data-slot="sheet-content"]');
+  const answer = popup.locator('[data-message-role="assistant"]');
+  const log = popup.getByRole("log", { includeHidden: true });
+  const stopped = answer.getByText("Stopped", { exact: true });
+
+  // [[slow]] streams for about 9 s (lib/ai/mock-scenarios.ts), long enough for every step below.
+  await panel.getByRole("textbox").fill(`${PROMPTS_EN[0]} ${SLOW_TRIGGER}`);
+  await panel.getByRole("button", { name: "Send message" }).click();
+  await expect(answer).toHaveCount(1);
+  await expect(log).toHaveAttribute("aria-busy", "true");
+
+  // A click on the backdrop, left of the drawer, closes it; Esc would stop the answer instead.
+  await page.mouse.click(40, 360);
+  await expect(popup).toBeHidden();
+  const hiddenAt = await textLength(answer);
+  await expect.poll(() => textLength(answer)).toBeGreaterThan(hiddenAt);
+
+  // An Esc on the desk, with the drawer closed. After the time a stop takes to land (as
+  // chat.spec.ts's expectStoppedMidAnswer waits), the hidden answer is still streaming.
+  await page.keyboard.press("Escape");
+  await page.waitForTimeout(500);
+  const afterEsc = await textLength(answer);
+  await expect.poll(() => textLength(answer)).toBeGreaterThan(afterEsc);
+  await expect(log).toHaveAttribute("aria-busy", "true");
+  await expect(stopped).toHaveCount(0);
+
+  // Reopened, the drawer shows the answer still streaming; there an Esc stops it and leaves the
+  // drawer open (components/try/try-drawer.tsx).
+  await page.getByRole("button", { name: "Try as a customer" }).click();
+  await expect(panel.getByRole("button", { name: "Stop generating" })).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(stopped).toBeVisible();
+  await expect(panel).toBeVisible();
+  await expect(panel.getByRole("button", { name: "Send message" })).toBeVisible();
 });
 
 test("the Evals page renders the headline (a real run's CI, or a mock statement), the matrix and a row per ticket", async ({

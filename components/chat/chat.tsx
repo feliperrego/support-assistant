@@ -73,6 +73,15 @@ function focusUnlessTouch(element: HTMLTextAreaElement | null): void {
 }
 
 /**
+ * False while the element is not rendered: it, or an ancestor, is display: none, so it has no
+ * box. getClientRects rather than checkVisibility(), which Safari has only from 17.4, below the
+ * 16.4 that Next.js supports.
+ */
+function isRendered(element: HTMLElement | null): boolean {
+  return element !== null && element.getClientRects().length > 0;
+}
+
+/**
  * The chat shell (X-01 design §1, §4.3): owns useChat and every piece of chat-level state, and
  * renders the site header with New chat, the conversation, the banners, the composer and the
  * screen-reader status line. A project changes it through the props above, from its own
@@ -177,15 +186,23 @@ export function Chat<M extends UIMessage = UIMessage>({
     setNewChats((count) => count + 1);
   };
 
-  // Esc stops from anywhere on the page, but only while busy. An Esc another component already
-  // handled (a popover that closed, which marks it defaultPrevented) stops nothing.
+  // Esc stops from anywhere on the page, but only while busy and while the chat is rendered. An
+  // Esc another component already handled (a popover that closed, which marks it
+  // defaultPrevented) stops nothing. A chat that is not rendered ignores Esc: P1's drawer keeps
+  // it mounted but display: none when closed, and its answer streams on unseen. The listener
+  // sits on window, so it runs after every keydown listener on the document, Base UI's dialogs
+  // and popovers among them, whatever order they were added in. On the document, a listener
+  // added before the drawer opened ran first, and its stop re-rendered the conversation as idle
+  // before the drawer looked, so the drawer closed as well (P1 spec D11: while an answer streams,
+  // Esc stops it and the drawer stays open).
   useEffect(() => {
     if (!busy) return;
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && !event.isComposing && !event.defaultPrevented) handleStop();
+      if (event.key !== "Escape" || event.isComposing || event.defaultPrevented) return;
+      if (isRendered(scrollElementRef.current)) handleStop();
     };
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
   }, [busy, handleStop]);
 
   // Focus the composer on load and after each New chat, except on touch devices. After New chat
